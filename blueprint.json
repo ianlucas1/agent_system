@@ -1,0 +1,52 @@
+{
+  "version": "1.0",
+  "phased_self_implementation_plan": {
+    "phase_1": "Environment audit and tool-chain discovery",
+    "phase_2": "Core system generation & folder scaffolding",
+    "phase_3": "Data collection & research corpus build-out",
+    "phase_4": "Model development & validation",
+    "phase_5": "CI/CD, containerization (optional), production hardening"
+  },
+  "governance": {
+    "decision_loop": ["Planner", "Critic", "Implementer"],
+    "deadlock_state": "Blocked-NeedsHuman-TieBreak",
+    "budget_limit_usd_per_day": 20
+  },
+  "communication_protocols": {
+    "agent_to_ceo": "exec_requests/*.md",
+    "ceo_to_agent": "inbox/*.md",
+    "optional_cli": "chat_cli.py (future)"
+  },
+  "quality_assurance": {
+    "north_star_metrics": ["model_accuracy", "data_freshness", "cost_efficiency"],
+    "cadence": "after first merge, then every 50 merges"
+  },
+  "experiential_learning": {
+    "debrief_format": "markdown",
+    "storage_path": ".agent_workspace/debriefs/"
+  },
+  "persistent_memory": {
+    "storage_choice": "sqlite (upgradeable to vector DB)",
+    "path": ".agent_workspace/memory.db"
+  },
+  "observability": {
+    "heartbeat_log": "logs/heartbeat.log",
+    "metrics_log": "logs/metrics.log"
+  },
+  "safety_states": {
+    "safe_mode_flag": "config_defaults.safe_mode",
+    "budget_pause": 0.8
+  },
+  "config_defaults": {
+    "enable_mcp": false,
+    "enable_a2a": false,
+    "auto_merge": true,
+    "max_tokens_per_day": 1000000,
+    "prefer_container": true,
+    "llm_temperature": 0.3,
+    "safe_mode": false
+  },
+  "state_files": {
+    "session_bootstrap": ".agent_workspace/session_bootstrap.json"
+  }
+} 
