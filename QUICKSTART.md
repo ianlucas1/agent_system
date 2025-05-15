@@ -1,72 +1,94 @@
-# Quickstart: Running the AI Chat Interface
+# Quickstart: AI Chat Interface
 
-This guide provides the minimal steps to get the AI Chat Interface running.
+This guide helps you get the AI Chat Interface up and running.
 
-## 1. Activate Virtual Environment & Install Dependencies
+## Running the AI Chat Interface (Regular Use)
 
-First, ensure your Python virtual environment is active and dependencies are installed.
+Once the first-time setup (see below) is complete, follow these steps each time you want to use the chat interface:
 
-From the project root (`/Users/ianlucas/agent_system`):
+1.  **Open Your Terminal in the Project Directory**:
+    Navigate to the project root (`/Users/ianlucas/agent_system`).
+
+2.  **Automatic Virtual Environment Activation**:
+    If `direnv` is set up correctly (as per first-time setup), it will automatically detect the `.envrc` and `.python-version` files and activate the `agent_system-venv` virtual environment. Your terminal prompt should change to indicate this (e.g., `(agent_system-venv) ...`).
+    *   If it doesn't activate, ensure `direnv` is installed, hooked into your shell, and you've run `direnv allow` in this directory.
+
+3.  **Run the Chat GUI**:
+    With the `agent_system-venv` active, run:
+    ```bash
+    streamlit run chat_gui.py
+    ```
+    This will start the web server and should automatically open the chat interface in your default web browser.
+
+4.  **API Keys**:
+    The application requires API keys for OpenAI and/or Google Gemini. Ensure these are correctly set up in a `.env` file located at `/Users/ianlucas/agent_system/.env`. See the "API Key Setup" section under "First-Time Setup" for details.
+
+5.  **Dependencies (`requirements.txt`)**:
+    You generally **do not** need to run `pip install -r requirements.txt` every time. This is only required during the first-time setup or if the `requirements.txt` file has been updated with new dependencies.
+
+---
+
+## First-Time Setup (or New Machine)
+
+Follow these steps to set up the project from scratch.
+
+### 1. Prerequisites
+
+*   **Git**: For cloning the repository.
+*   **Python**: It's highly recommended to manage Python versions using `pyenv`.
+    *   Install `pyenv`: Follow instructions at [pyenv installer](https://github.com/pyenv/pyenv-installer).
+*   **`direnv`**: For automatic virtual environment activation.
+    *   Install `direnv`: Follow instructions at [direnv installation guide](https://direnv.net/docs/installation.html). Ensure it's hooked into your shell (e.g., by adding `eval "$(direnv hook zsh)"` to your `.zshrc`).
+
+### 2. Clone the Repository
 
 ```bash
-# Activate your preferred virtual environment (e.g., using pyenv)
-# Example: pyenv shell ethereum-project-venv 
+# Replace with the correct repository URL if different
+git clone https://github.com/ianlucas1/agent_system.git
+cd agent_system
+```
 
-# Install/update dependencies
+### 3. Set Up Python Virtual Environment
+
+The project is configured to use a `pyenv` virtual environment named `agent_system-venv`.
+
+1.  **Ensure a base Python version is installed via `pyenv`** (e.g., 3.11, 3.12). If you need to install one:
+    ```bash
+    # Example: Install Python 3.12.0
+    pyenv install 3.12.0 
+    ```
+2.  **Create the `agent_system-venv` virtual environment** (if it doesn't exist from a previous setup or another machine):
+    ```bash
+    # Replace 3.12.0 with your desired base Python version if different
+    pyenv virtualenv 3.12.0 agent_system-venv
+    ```
+    The `.python-version` file in the repository is already set to `agent_system-venv`.
+
+### 4. Activate Environment with `direnv`
+
+1.  Navigate to the project directory (if not already there).
+2.  `direnv` will notice the `.envrc` file (already committed) which tells it to activate the `agent_system-venv` via an explicit `layout python …/agent_system-venv/bin/python` command. The first time (or whenever `.envrc` changes) it will be blocked. Allow it:
+    ```bash
+    direnv allow
+    ```
+    Your terminal prompt should now show `(agent_system-venv)`.
+
+### 5. Install Dependencies
+
+With the `agent_system-venv` active, install the required Python packages:
+
+```bash
 pip install -r requirements.txt
 ```
 
-**Note:** You generally only need to run `pip install -r requirements.txt` once after cloning the project or when the `requirements.txt` file is updated with new dependencies. The packages are installed directly into your active virtual environment.
+### 6. API Key Setup (`.env` file)
 
-## 2. Run the Chat GUI
-
-Once the environment is set up:
-
-```bash
-streamlit run chat_gui.py
-```
-
-This will start the web server and should automatically open the chat interface in your default web browser.
-
-## API Keys
-
-Ensure your API keys are correctly set up in a `.env` file in the project root (`/Users/ianlucas/agent_system/.env`):
-
-```
-OPENAI_API_KEY="your_openai_key_here"
-GOOGLE_API_KEY="your_google_key_here"
-``` 
-
-## 3. (Optional) Automatic Virtual Environment Activation
-
-To avoid manually activating your virtual environment every time you open the project, you can set up automatic activation.
-
-### Using `direnv` with `pyenv`
-
-`direnv` is a shell extension that loads and unloads environment variables depending on the current directory. If you use `pyenv` for managing Python versions and virtual environments, you can use `direnv` to automatically activate your project's `pyenv` virtual environment.
-
-1.  **Install `direnv`**: Follow the installation instructions for your operating system on the [direnv website](https://direnv.net/docs/installation.html). Make sure to hook it into your shell.
-2.  **Create a `.python-version` file (if you haven't already)**: In your project root (`/Users/ianlucas/agent_system`), ensure you have a `.python-version` file specifying your desired `pyenv` virtual environment. You can create/update this by running:
-    ```bash
-    pyenv local ethereum-project-venv
+1.  Create a file named `.env` in the project root (`/Users/ianlucas/agent_system/.env`).
+2.  Add your API keys to this file in the following format:
+    ```env
+    OPENAI_API_KEY="your_openai_api_key_here"
+    GOOGLE_API_KEY="your_google_api_key_here"
     ```
-    This tells `pyenv` to use the `ethereum-project-venv` environment for this directory.
-3.  **Create a `.envrc` file**: In your project root (`/Users/ianlucas/agent_system`), create a file named `.envrc` with the following content:
-    ```bash
-    # For .envrc
-    use pyenv
-    # Or, if 'use pyenv' doesn't pick up the virtualenv correctly:
-    # layout python <path_to_your_python_executable_in_venv>
-    # e.g. layout python $(pyenv which python)
+    Replace the placeholder values with your actual keys. This file is ignored by Git (due to `.gitignore`) to keep your keys private.
 
-    # You can also add other environment-specific commands here,
-    # for example, to load variables from your .env file:
-    # dotenv
-    ```
-4.  **Allow `direnv`**: The first time you `cd` into the directory (or when `.envrc` changes), `direnv` will show a message saying it's blocked. Run `direnv allow` in your terminal to enable it for this project.
-
-Now, whenever you navigate to your project directory in the terminal, `direnv` should automatically configure your shell to use the `ethereum-project-venv` environment managed by `pyenv`.
-
-### Cursor-Specific Settings
-
-Your IDE, Cursor, might also have built-in features or extensions to automatically activate a virtual environment when a project is loaded. Check Cursor's documentation or settings for "Python interpreter selection" or "terminal profiles" that might allow project-specific configurations. 
+After completing these steps, you can run the application as described in "Running the AI Chat Interface (Regular Use)". 
