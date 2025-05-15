@@ -11,6 +11,7 @@ fi
 MSG="$1"
 
 # Run fast quality checks
+pip install -e .  >/dev/null 2>&1 || true
 ruff check .
 pytest -q
 mypy src || true  # non-blocking for now

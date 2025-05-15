@@ -64,3 +64,9 @@ The web UI maintains multi-turn context. You can observe both model responses si
 ## Contributing
 
 Please read the [CONTRIBUTING.md](CONTRIBUTING.md) guide for a quick development loop, GitHub CLI workflow, and pre-commit setup.
+
+Before running the CLI or GUI you should install the package in *editable* mode so `src/` is importable:
+
+```bash
+pip install -e .
+```

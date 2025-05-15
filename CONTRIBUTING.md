@@ -23,6 +23,9 @@ pytest          # includes coverage gate via pytest.ini
 mypy src || true   # non-blocking for now – tighten later
 bandit -q -r src   # security scan
 
+# Ensure package is installed in editable mode once per clone
+pip install -e .
+
 # Stage *everything* (tracked & untracked) so nothing is missed
 # The -A flag catches new files you created.
 git add -A

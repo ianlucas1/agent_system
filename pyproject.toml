@@ -1,0 +1,15 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "agent_system"
+version = "0.0.1"
+authors = [ { name = "Ian Lucas" } ]
+description = "Autonomous Ethereum valuation agent"
+readme = "README.md"
+requires-python = ">=3.11"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["src", "src.*"] 
