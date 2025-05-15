@@ -88,12 +88,13 @@ class CommandHandler:
             or low_input.startswith("what is in")
             or low_input.startswith("list ")
         ):
+            # Remove the prefix and leading/trailing whitespace and punctuation
             dir_query = re.sub(
                 r"^(what's in( the)?|what is in( the)?|list)\s*",
                 "",
                 stripped_input,
                 flags=re.IGNORECASE,
-            ).strip(" ?.folderdirectory")
+            ).strip(" .?\t\n\r")
             return Command(CommandType.LIST, args=dir_query if dir_query else ".")
 
         if (
