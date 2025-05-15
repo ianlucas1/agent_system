@@ -2,6 +2,9 @@
 
 Thank-you for helping improve this project!  Below is a concise, repeatable workflow that keeps the repository healthy and avoids the "untracked files" issue we occasionally hit.
 
+👉  For the philosophy behind these gates (and how we handle legacy Bandit/MyPy
+    findings) see `docs/quality_policy.md`.
+
 ---
 ## 1  Local Development Loop
 
