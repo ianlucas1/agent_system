@@ -124,8 +124,8 @@ class CommandHandler:
                 if len(parts) < 2 or not parts[1].strip():
                     return Command(CommandType.UNKNOWN, args="Usage: /gh <args>")
                 return Command(CommandType.RUN, args=("gh", stripped_input[len(cmd_token):].strip()))
-            elif cmd_token == "/metrics": # Added /metrics command parsing
-                 return Command(CommandType.METRICS)
+            elif cmd_token == "/metrics":  # nosec B105 – route token
+                return Command(CommandType.METRICS)
             else:
                 return Command(
                     CommandType.UNKNOWN, args=f"Unknown command: {cmd_token}"
