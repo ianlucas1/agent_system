@@ -22,6 +22,7 @@ class CommandType(Enum):
     OVERWRITE = auto()
     RUN = auto()
     AGENT = auto()
+    MEMORY = auto()
     UNKNOWN = auto()
 
 
@@ -84,6 +85,25 @@ class CommandHandler:
                     return Command(CommandType.UNKNOWN, args="Usage: /agent <json-payload>")
                 payload = stripped_input[len(cmd_token):].strip()
                 return Command(CommandType.AGENT, args=payload)
+            elif cmd_token == "/mem":
+                rest = stripped_input[len(cmd_token):].strip()
+                mem_parts = rest.split(" ", 1)
+                op = mem_parts[0].lower()
+                if op == "get":
+                    if len(mem_parts) < 2 or not mem_parts[1].strip():
+                        return Command(CommandType.UNKNOWN, args="Usage: /mem get <key>")
+                    key = mem_parts[1].strip()
+                    return Command(CommandType.MEMORY, args=(op, key, None))
+                elif op in ("set", "append"):
+                    if len(mem_parts) < 2 or not mem_parts[1].strip():
+                        return Command(CommandType.UNKNOWN, args=f"Usage: /mem {op} <key> = <value>")
+                    remainder = mem_parts[1]
+                    if "=" not in remainder:
+                        return Command(CommandType.UNKNOWN, args=f"Usage: /mem {op} <key> = <value>")
+                    key, value = map(str.strip, remainder.split("=", 1))
+                    return Command(CommandType.MEMORY, args=(op, key, value))
+                else:
+                    return Command(CommandType.UNKNOWN, args=f"Unknown memory operation: {op}")
             elif cmd_token == "/git":
                 if len(parts) < 2 or not parts[1].strip():
                     return Command(CommandType.UNKNOWN, args="Usage: /git <args>")
@@ -318,6 +338,17 @@ class CommandHandler:
                     agent_name = data.get("agent_name", "Agent")
                     prefix_msg = f"[{agent_name}] {tool_output.message}"
                     tool_output = ToolOutput(success=True, message=prefix_msg, data=tool_output.data)
+
+            elif parsed_command.command_type == CommandType.MEMORY:
+                op, key, value = parsed_command.args
+                from src.tools.registry import ToolRegistry
+                mem_tool = ToolRegistry.get("memory")
+                if mem_tool is None:
+                    from src.tools.memory import MemoryTool
+                    mem_tool = MemoryTool()
+                logger.info("/mem invoked: %s %s", op, key)
+                tool_input = ToolInput(operation_name=op, args={"key": key, "value": value})
+                tool_output = mem_tool.execute(tool_input)
 
             elif parsed_command.command_type == CommandType.UNKNOWN:
                 logger.warning(

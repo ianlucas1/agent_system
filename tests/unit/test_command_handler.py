@@ -110,3 +110,27 @@ def test_agent_success(monkeypatch, tmp_path):
     cmd = handler.parse(cmd_str, [])
     resp = handler.execute_command(cmd, chat_session=None, current_user_input=cmd_str)
     assert resp.startswith("[PlannerAgent]") 
+
+def test_parse_mem_get(handler):
+    cmd = handler.parse('/mem get foo', [])
+    assert cmd is not None
+    assert cmd.command_type == CommandType.MEMORY
+    assert cmd.args == ('get', 'foo', None)
+
+def test_parse_mem_set(handler):
+    cmd = handler.parse('/mem set key = value', [])
+    assert cmd is not None
+    assert cmd.command_type == CommandType.MEMORY
+    assert cmd.args == ('set', 'key', 'value')
+
+def test_parse_mem_append(handler):
+    cmd = handler.parse('/mem append log = entry', [])
+    assert cmd is not None
+    assert cmd.command_type == CommandType.MEMORY
+    assert cmd.args == ('append', 'log', 'entry')
+
+def test_parse_mem_bad(handler):
+    cmd = handler.parse('/mem set foo', [])
+    assert cmd is not None
+    assert cmd.command_type == CommandType.UNKNOWN
+    assert 'Usage' in cmd.args 

@@ -20,7 +20,7 @@ _DEFAULT_CONTEXT_DIR = os.path.join(os.path.dirname(__file__), "..", "..", "agen
 
 # Optional import for runtime; replaced in tests.
 try:
-    from src.core.chat_session import ChatSession as _RealChatSession  # noqa: WPS433
+    from src.core.chat_session import ChatSession as _RealChatSession  # noqa
 except Exception:  # pragma: no cover – import may fail in test env w/o deps
     _RealChatSession = None  # type: ignore[misc,assignment]
 
@@ -76,7 +76,12 @@ class MultiAgentTool(Tool):
         except Exception as exc:  # noqa: BLE001
             logger.error("Failed to write context file: %s", exc)
             return ToolOutput(success=False, error=f"Failed to write context: {exc}")
-
+        # Record reply in shared context bus
+        try:
+            from src.shared.context_bus import ContextBus
+            ContextBus().append(f"{name.lower().replace(' ', '_')}_log", reply)
+        except Exception as exc:
+            logger.error("Failed to append to ContextBus: %s", exc)
         summary = f"🧑‍🤝‍🧑 {name} responded and context saved to {context_file}"
         return ToolOutput(success=True, message=summary, data={"reply": reply, "file": context_file})
 
