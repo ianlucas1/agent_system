@@ -1,5 +1,5 @@
 python-dotenv
 openai
 google-generativeai
-streamlit
-google-a2a 
+python-a2a==0.5.5          # Google Agent-to-Agent protocol
+streamlit 

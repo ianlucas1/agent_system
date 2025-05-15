@@ -47,10 +47,9 @@ class ChatSession:
         # Initialize OpenAI client
         if openai_api_key:
             try:
-                import openai
-                openai.api_key = openai_api_key
-                # Test a minimal configuration (no call made here)
-                self.openai_client = openai  # use openai module as client
+                from openai import OpenAI
+                # Instantiate a typed client instance (recommended ≥ 1.0.0)
+                self.openai_client = OpenAI(api_key=openai_api_key)
                 self.openai_available = True
             except ImportError:
                 self.openai_client = None
@@ -374,11 +373,11 @@ class ChatSession:
 
         if model_choice == "openai":
             try:
-                response = self.openai_client.ChatCompletion.create(
-                    model="gpt-4",
+                response = self.openai_client.chat.completions.create(
+                    model="gpt-4o-mini",
                     messages=self.openai_history
                 )
-                answer = response['choices'][0]['message']['content']
+                answer = response.choices[0].message.content
             except Exception as e:
                 answer = f"Error communicating with OpenAI: {e}"
             self.openai_history.append({"role": "assistant", "content": answer})
@@ -428,11 +427,11 @@ class ChatSession:
                 output_messages.append(("collab", collab_answer))
             else:
                 try:
-                    response_o = self.openai_client.ChatCompletion.create(
-                        model="gpt-4",
+                    response_o = self.openai_client.chat.completions.create(
+                        model="gpt-4o-mini",
                         messages=self.openai_history
                     )
-                    answer_o = response_o['choices'][0]['message']['content']
+                    answer_o = response_o.choices[0].message.content
                 except Exception as e:
                     answer_o = f"Error communicating with OpenAI: {e}"
                 try:

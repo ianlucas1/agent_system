@@ -71,7 +71,7 @@ if chat_session.pending_write_path:
     file_name = os.path.basename(chat_session.pending_write_path)
     if st.button(f"Overwrite {file_name}"):
         chat_session.confirm_overwrite()
-        st.experimental_rerun()
+        st.rerun()
 
 # Input form for new user message
 st.write("----")
@@ -83,4 +83,4 @@ with st.form(key="chat_form", clear_on_submit=True):
         with st.spinner("Waiting for response..."):
             chat_session.process_user_message(user_message, model_choice=selected_model,
                                               use_a2a=st.session_state.get("use_a2a", False))
-        st.experimental_rerun()
+        st.rerun()

@@ -14,11 +14,11 @@ def run(user_message: str, openai_client, gemini_client) -> str:
     question = user_message
     # Round 1: Agent A (OpenAI) gives initial answer
     try:
-        response = openai_client.ChatCompletion.create(
-            model="gpt-4",
+        response = openai_client.chat.completions.create(
+            model="gpt-4o-mini",
             messages=[{"role": "user", "content": question}]
         )
-        openai_answer = response['choices'][0]['message']['content']
+        openai_answer = response.choices[0].message.content
     except Exception as e:
         return f"Error from OpenAI agent: {e}"
     # Round 2: Agent B (Gemini) provides critique or additional insight
@@ -36,11 +36,11 @@ def run(user_message: str, openai_client, gemini_client) -> str:
             {"role": "system", "content": "You are Agent A. Another agent (Agent B) has given feedback on your answer."},
             {"role": "user", "content": f"Question: {question}\nYour original answer: {openai_answer}\nAgent B's feedback: {gemini_feedback}\nPlease provide an improved final answer."}
         ]
-        final_response = openai_client.ChatCompletion.create(
-            model="gpt-4",
+        final_response = openai_client.chat.completions.create(
+            model="gpt-4o-mini",
             messages=refine_messages
         )
-        final_answer = final_response['choices'][0]['message']['content']
+        final_answer = final_response.choices[0].message.content
     except Exception as e:
         return f"Error during answer refinement: {e}"
     return final_answer
