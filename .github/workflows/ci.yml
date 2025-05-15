@@ -32,6 +32,15 @@ jobs:
           coverage xml
       - name: Build Docs
         run: mkdocs build --strict
+      - name: Clean workspace artifacts generated during tests
+        if: always()
+        run: |
+          # Remove transient files that tests may create which would otherwise
+          # appear as modified and fail the cleanliness check.
+          rm -rf agent_workspace/
+          # If the context file is tracked, restore it to its committed state so
+          # there are no diff markers.
+          git checkout -- agent_workspace/context.json || true
       - name: Ensure repo clean (no untracked files)
         run: |
           git status --porcelain

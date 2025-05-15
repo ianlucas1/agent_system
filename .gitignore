@@ -10,7 +10,10 @@ __pycache__/
 # Environment and logs
 logs/
 reports/
+
+# Workspace artifacts generated during integration tests
 .agent_workspace/
+agent_workspace/
 
 # Data folders (consider if any small, essential data should be tracked)
 data/
