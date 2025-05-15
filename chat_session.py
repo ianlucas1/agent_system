@@ -81,19 +81,40 @@ class ChatSession:
             self.gemini_client = None
             self.gemini_available = False
 
-    def process_user_message(self, user_input: str, model_choice: str = "openai", use_a2a: bool = False):
+    def process_user_message(self, user_input: str, model_choice: str = "openai", specific_model_name: str = None, use_a2a: bool = False):
         """
         Process a user input message, handle commands or get response from model(s).
-        model_choice: "openai", "gemini", or "both".
-        use_a2a: if True and model_choice=="both", engage collaborative A2A mode.
+        model_choice: "openai" or "gemini" (acts as provider based on GUI selection).
+        specific_model_name: The exact model name selected in the GUI (e.g., "gpt-4.1", "gemini-2.5-pro-preview-05-06")
+        use_a2a: Currently unused due to single model selection GUI.
         Returns a list of (sender, content) tuples representing the assistant responses generated.
         """
         user_input = user_input.strip()
-        # Determine if switching model for context sync
+
+        # Update the relevant model in the session if a specific one is passed
+        if specific_model_name:
+            if model_choice == "openai":
+                self.openai_model = specific_model_name
+            elif model_choice == "gemini":
+                # Re-initialize Gemini client ONLY if model name changes AND client is available
+                if self.gemini_available and self.gemini_model != specific_model_name:
+                    try:
+                        import google.generativeai as genai
+                        self.gemini_client = genai.GenerativeModel(specific_model_name)
+                        self.gemini_model = specific_model_name # Update after successful re-init
+                    except Exception as e:
+                        # If re-init fails, mark Gemini as unavailable for this call to prevent further errors
+                        # self.gemini_available = False # Option: or just let the error propagate
+                        print(f"Error re-initializing Gemini client for model {specific_model_name}: {e}")
+                        # Potentially add a message to output_messages here
+                elif not self.gemini_available: # If it wasn't available to begin with, just set the name
+                     self.gemini_model = specific_model_name
+                else: # It is available and name is the same, no change needed
+                    pass
+        
+        # Determine if switching model for context sync (less relevant with single model choice GUI but kept for robustness)
         if self.last_model and model_choice != self.last_model:
-            # Sync conversation history to the new model's history list using unified chat_log
             self._sync_history_to(model_choice)
-        # Track the current model as last used
         self.last_model = model_choice
 
         # Check and handle file system commands
@@ -102,7 +123,9 @@ class ChatSession:
         cmd_args = None
         output_messages = []
 
-        # Slash commands explicitly
+        # Slash commands explicitly (sender_label determined by model_choice)
+        sender_for_commands = model_choice # "openai" or "gemini"
+
         if user_input.startswith("/"):
             is_command = True
             parts = user_input.split(" ", 2)
@@ -110,11 +133,10 @@ class ChatSession:
             if cmd == "/read":
                 command_type = "read"
                 if len(parts) < 2 or parts[1] == "":
-                    output_messages.append(("openai" if model_choice != "gemini" else "gemini",
-                                             "⚠️ Usage: /read <filepath>"))
+                    output_messages.append((sender_for_commands, "⚠️ Usage: /read <filepath>"))
                     # Log user command and response
                     self.chat_log.append(("user", user_input))
-                    self.chat_log.append((output_messages[0][0], output_messages[0][1]))
+                    self.chat_log.append((sender_for_commands, output_messages[0][1]))
                     for history in (self.openai_history, self.gemini_history):
                         history.append({"role": "user", "content": user_input})
                         history.append({"role": "assistant", "content": output_messages[0][1]})
@@ -130,10 +152,9 @@ class ChatSession:
             elif cmd == "/write":
                 command_type = "write"
                 if len(parts) < 3:
-                    output_messages.append(("openai" if model_choice != "gemini" else "gemini",
-                                             "⚠️ Usage: /write <filepath> <content>"))
+                    output_messages.append((sender_for_commands, "⚠️ Usage: /write <filepath> <content>"))
                     self.chat_log.append(("user", user_input))
-                    self.chat_log.append((output_messages[0][0], output_messages[0][1]))
+                    self.chat_log.append((sender_for_commands, output_messages[0][1]))
                     for history in (self.openai_history, self.gemini_history):
                         history.append({"role": "user", "content": user_input})
                         history.append({"role": "assistant", "content": output_messages[0][1]})
@@ -146,9 +167,9 @@ class ChatSession:
                 target_file = parts[1].strip() if len(parts) >= 2 else ""
                 cmd_args = target_file
             else:
-                is_command = False
+                is_command = False # Not a recognized slash command
         else:
-            # Natural language command triggers
+            # Natural language command triggers (simplified, sender_for_commands will be used)
             low = user_input.lower()
             if ("save this to " in low) or ("save that to " in low) or ("write this to " in low):
                 import re
@@ -159,14 +180,13 @@ class ChatSession:
                     if file_name:
                         last_assistant = None
                         for sender, content in reversed(self.chat_log):
-                            if sender in ("openai", "gemini", "collab"):
+                            if sender in ("openai", "gemini"):
                                 last_assistant = content
                                 break
                         if last_assistant is None:
-                            output_messages.append(( "openai" if model_choice != "gemini" else "gemini",
-                                                      "⚠️ No content available to save."))
+                            output_messages.append((sender_for_commands, "⚠️ No content available to save."))
                             self.chat_log.append(("user", user_input))
-                            self.chat_log.append((output_messages[0][0], output_messages[0][1]))
+                            self.chat_log.append((sender_for_commands, output_messages[0][1]))
                             for history in (self.openai_history, self.gemini_history):
                                 history.append({"role": "user", "content": user_input})
                                 history.append({"role": "assistant", "content": output_messages[0][1]})
@@ -174,58 +194,20 @@ class ChatSession:
                         cmd_args = (file_name, last_assistant)
                         is_command = True
             if not is_command:
-                if low.startswith("what's in") or low.startswith("what is in"):
-                    dir_query = user_input
-                    for prefix in ["what's in the", "what is in the", "what's in", "what is in"]:
-                        if low.startswith(prefix):
-                            dir_query = user_input[len(prefix):].strip()
-                            break
-                    dir_query = dir_query.rstrip(" ?.")
-                    if dir_query.lower().endswith(" folder"):
-                        dir_query = dir_query[:-len(" folder")].strip()
-                    if dir_query.lower().endswith(" directory"):
-                        dir_query = dir_query[:-len(" directory")].strip()
-                    if dir_query == "":
-                        dir_query = "."
+                if low.startswith("what's in") or low.startswith("what is in") or low.startswith("list "):
+                    # Simplified parsing for list
+                    dir_query = user_input.lower().replace("what's in the", "").replace("what is in the", "").replace("what's in", "").replace("what is in", "").replace("list ", "").strip(" ?.folderdirectory")
+                    cmd_args = dir_query if dir_query else "."
                     command_type = "list"
-                    cmd_args = dir_query
                     is_command = True
-                elif low.startswith("list "):
-                    dir_query = user_input[5:].strip()
-                    if dir_query == "":
-                        dir_query = "."
-                    command_type = "list"
-                    cmd_args = dir_query
-                    is_command = True
-                if not is_command:
-                    if low.startswith("read ") or low.startswith("open ") or low.startswith("show me ") or low.startswith("show "):
-                        if " folder" in low or " directory" in low:
-                            dir_query = user_input
-                            for prefix in ["open the", "open", "show me the", "show me", "show the", "show", "read the", "read"]:
-                                if low.startswith(prefix):
-                                    dir_query = user_input[len(prefix):].strip()
-                                    break
-                            dir_query = dir_query.rstrip(" .?")
-                            if dir_query.lower().endswith(" folder"):
-                                dir_query = dir_query[:-len(" folder")].strip()
-                            if dir_query.lower().endswith(" directory"):
-                                dir_query = dir_query[:-len(" directory")].strip()
-                            if dir_query == "":
-                                dir_query = "."
-                            command_type = "list"
-                            cmd_args = dir_query
+                elif low.startswith("read ") or low.startswith("open ") or low.startswith("show me ") or low.startswith("show "):
+                    if not (" folder" in low or " directory" in low): # Avoid conflict with list
+                        # Simplified parsing for read
+                        file_query = user_input.lower().replace("open the", "").replace("open", "").replace("read the", "").replace("read", "").replace("show me the", "").replace("show me", "").replace("show", "").strip(" ?")
+                        if file_query:
+                            cmd_args = file_query
+                            command_type = "read"
                             is_command = True
-                        else:
-                            file_query = user_input
-                            for prefix in ["open the", "open", "read the", "read", "show me the", "show me", "show"]:
-                                if low.startswith(prefix):
-                                    file_query = user_input[len(prefix):].strip()
-                                    break
-                            file_query = file_query.strip(" ?")
-                            if file_query != "":
-                                command_type = "read"
-                                cmd_args = file_query
-                                is_command = True
 
         if is_command and command_type:
             self.chat_log.append(("user", user_input))
@@ -250,24 +232,18 @@ class ChatSession:
                         elif ext in [".csv"]:
                             lang = ""
                     response_text = f"Content of `{path}`:\n```{lang}\n{content}\n```"
-                    sender_label = "openai" if model_choice != "gemini" else "gemini"
-                    if model_choice == "both":
-                        sender_label = "openai"
-                    self.chat_log.append((sender_label, response_text))
+                    self.chat_log.append((sender_for_commands, response_text))
                     self.openai_history.append({"role": "assistant", "content": response_text})
                     self.gemini_history.append({"role": "assistant", "content": response_text})
-                    output_messages.append((sender_label, response_text))
+                    output_messages.append((sender_for_commands, response_text))
                 elif command_type == "list":
                     dir_path = cmd_args
                     listing = file_manager.list_dir(dir_path)
                     response_text = f"Contents of `{dir_path}`:\n{listing}"
-                    sender_label = "openai" if model_choice != "gemini" else "gemini"
-                    if model_choice == "both":
-                        sender_label = "openai"
-                    self.chat_log.append((sender_label, response_text))
+                    self.chat_log.append((sender_for_commands, response_text))
                     self.openai_history.append({"role": "assistant", "content": response_text})
                     self.gemini_history.append({"role": "assistant", "content": response_text})
-                    output_messages.append((sender_label, response_text))
+                    output_messages.append((sender_for_commands, response_text))
                 elif command_type == "write":
                     path, content_to_write = cmd_args
                     abs_target = file_manager._resolve_path(path)
@@ -277,108 +253,65 @@ class ChatSession:
                         filename = os.path.basename(path)
                         warning_msg = (f"⚠️ File `{filename}` already exists. Please confirm overwrite by typing `/overwrite {filename}` "
                                        f"or use a different filename.")
-                        sender_label = "openai" if model_choice != "gemini" else "gemini"
-                        if model_choice == "both":
-                            sender_label = "openai"
-                        self.chat_log.append((sender_label, warning_msg))
+                        self.chat_log.append((sender_for_commands, warning_msg))
                         self.openai_history.append({"role": "assistant", "content": warning_msg})
                         self.gemini_history.append({"role": "assistant", "content": warning_msg})
-                        output_messages.append((sender_label, warning_msg))
+                        output_messages.append((sender_for_commands, warning_msg))
                     else:
                         bytes_written = file_manager.write_file(path, content_to_write)
                         success_msg = f"✅ Saved `{path}` ({bytes_written} bytes)"
-                        sender_label = "openai" if model_choice != "gemini" else "gemini"
-                        if model_choice == "both":
-                            sender_label = "openai"
-                        self.chat_log.append((sender_label, success_msg))
+                        self.chat_log.append((sender_for_commands, success_msg))
                         self.openai_history.append({"role": "assistant", "content": success_msg})
                         self.gemini_history.append({"role": "assistant", "content": success_msg})
-                        output_messages.append((sender_label, success_msg))
+                        output_messages.append((sender_for_commands, success_msg))
                 elif command_type == "overwrite":
                     target_file = cmd_args
                     if self.pending_write_path is None:
                         error_msg = "⚠️ No pending write operation to confirm."
-                        sender_label = "openai" if model_choice != "gemini" else "gemini"
-                        if model_choice == "both":
-                            sender_label = "openai"
-                        self.chat_log.append((sender_label, error_msg))
+                        self.chat_log.append((sender_for_commands, error_msg))
                         self.openai_history.append({"role": "assistant", "content": error_msg})
                         self.gemini_history.append({"role": "assistant", "content": error_msg})
-                        output_messages.append((sender_label, error_msg))
+                        output_messages.append((sender_for_commands, error_msg))
                     else:
                         pending_name = os.path.basename(self.pending_write_path)
                         if target_file and os.path.basename(target_file) != pending_name:
                             error_msg = f"⚠️ No pending overwrite for `{target_file}` (pending file is `{pending_name}`)."
-                            sender_label = "openai" if model_choice != "gemini" else "gemini"
-                            if model_choice == "both":
-                                sender_label = "openai"
-                            self.chat_log.append((sender_label, error_msg))
+                            self.chat_log.append((sender_for_commands, error_msg))
                             self.openai_history.append({"role": "assistant", "content": error_msg})
                             self.gemini_history.append({"role": "assistant", "content": error_msg})
-                            output_messages.append((sender_label, error_msg))
+                            output_messages.append((sender_for_commands, error_msg))
                         else:
                             rel_path = os.path.relpath(self.pending_write_path, file_manager.base_dir)
                             bytes_written = file_manager.write_file(rel_path, self.pending_write_content)
                             success_msg = f"✅ Saved `{rel_path}` ({bytes_written} bytes)"
-                            sender_label = "openai" if model_choice != "gemini" else "gemini"
-                            if model_choice == "both":
-                                sender_label = "openai"
-                            self.chat_log.append((sender_label, success_msg))
+                            self.chat_log.append((sender_for_commands, success_msg))
                             self.openai_history.append({"role": "assistant", "content": success_msg})
                             self.gemini_history.append({"role": "assistant", "content": success_msg})
-                            output_messages.append((sender_label, success_msg))
+                            output_messages.append((sender_for_commands, success_msg))
                             self.pending_write_path = None
                             self.pending_write_content = None
             except Exception as e:
                 error_msg = str(e) if str(e) else "⚠️ An unknown error occurred during file operation."
-                sender_label = "openai" if model_choice != "gemini" else "gemini"
-                if model_choice == "both":
-                    sender_label = "openai"
-                self.chat_log.append((sender_label, error_msg))
+                self.chat_log.append((sender_for_commands, error_msg))
                 self.openai_history.append({"role": "assistant", "content": error_msg})
                 self.gemini_history.append({"role": "assistant", "content": error_msg})
-                output_messages.append((sender_label, error_msg))
+                output_messages.append((sender_for_commands, error_msg))
             return output_messages
 
-        # Not a file command: handle with model(s)
+        # Not a file command: handle with selected model provider
         self.chat_log.append(("user", user_input))
-        if model_choice == "openai":
-            self.openai_history.append({"role": "user", "content": user_input})
-        elif model_choice == "gemini":
-            self.gemini_history.append({"role": "user", "content": user_input})
-        elif model_choice == "both":
-            self.openai_history.append({"role": "user", "content": user_input})
-            self.gemini_history.append({"role": "user", "content": user_input})
-        if model_choice == "openai" and not self.openai_available:
-            error_msg = "⚠️ OpenAI model is not available."
-            self.chat_log.append(("openai", error_msg))
-            output_messages.append(("openai", error_msg))
-            self.openai_history.append({"role": "assistant", "content": error_msg})
-            return output_messages
-        if model_choice == "gemini" and not self.gemini_available:
-            error_msg = "⚠️ Gemini model is not available."
-            self.chat_log.append(("gemini", error_msg))
-            output_messages.append(("gemini", error_msg))
-            self.gemini_history.append({"role": "assistant", "content": error_msg})
-            return output_messages
-        if model_choice == "both":
-            if not self.openai_available or not self.gemini_available:
-                error_msg = "⚠️ Cannot use both models: "
-                if not self.openai_available:
-                    error_msg += "OpenAI not initialized. "
-                if not self.gemini_available:
-                    error_msg += "Gemini not initialized."
-                sender_label = "openai"
-                self.chat_log.append((sender_label, error_msg))
-                output_messages.append((sender_label, error_msg))
-                self.openai_history.append({"role": "assistant", "content": error_msg})
-                self.gemini_history.append({"role": "assistant", "content": error_msg})
-                return output_messages
 
         if model_choice == "openai":
+            self.openai_history.append({"role": "user", "content": user_input})
+            if not self.openai_available:
+                error_msg = "⚠️ OpenAI model is not available."
+                self.chat_log.append(("openai", error_msg))
+                output_messages.append(("openai", error_msg))
+                self.openai_history.append({"role": "assistant", "content": error_msg})
+                return output_messages
             try:
                 response = self.openai_client.chat.completions.create(
-                    model=self.openai_model,
+                    model=self.openai_model, # Uses the updated self.openai_model
                     messages=self.openai_history
                 )
                 answer = response.choices[0].message.content
@@ -387,120 +320,68 @@ class ChatSession:
             self.openai_history.append({"role": "assistant", "content": answer})
             self.chat_log.append(("openai", answer))
             output_messages.append(("openai", answer))
+
         elif model_choice == "gemini":
+            self.gemini_history.append({"role": "user", "content": user_input})
+            if not self.gemini_available:
+                error_msg = "⚠️ Gemini model is not available."
+                self.chat_log.append(("gemini", error_msg))
+                output_messages.append(("gemini", error_msg))
+                self.gemini_history.append({"role": "assistant", "content": error_msg})
+                return output_messages
             try:
-                prompt = ""
+                prompt = "" # Construct prompt for Gemini from its history
                 for msg in self.gemini_history:
                     role = msg["role"]
                     content = msg["content"]
-                    if role == "system":
-                        prompt += f"System: {content}\n\n"
-                    elif role == "user":
-                        prompt += f"User: {content}\n"
-                    elif role == "assistant":
-                        prompt += f"Assistant: {content}\n"
+                    if role == "system": prompt += f"System: {content}\n\n"
+                    elif role == "user": prompt += f"User: {content}\n"
+                    elif role == "assistant": prompt += f"Assistant: {content}\n"
                 prompt += "Assistant:"
-                try:
-                    import google.generativeai as genai
-                except ImportError:
-                    answer = "⚠️ google-generativeai library not installed."
-                else:
-                    generative_model = genai.GenerativeModel(self.gemini_model)
-                    response = generative_model.generate_content(prompt)
-                    answer = response.text
+                
+                # Gemini client should have been re-initialized if model changed
+                if not self.gemini_client: # Double check if it became none due to re-init error
+                    raise Exception("Gemini client not initialized after model selection.")
+
+                response = self.gemini_client.generate_content(prompt)
+                answer = response.text
             except Exception as e:
                 answer = f"Error communicating with Gemini: {e}"
             self.gemini_history.append({"role": "assistant", "content": answer})
             self.chat_log.append(("gemini", answer))
             output_messages.append(("gemini", answer))
-        elif model_choice == "both":
-            if use_a2a:
-                try:
-                    from . import a2a_collaboration
-                except ImportError:
-                    try:
-                        import a2a_collaboration
-                    except ImportError:
-                        collab_answer = "⚠️ A2A collaboration mode is not available (library not installed)."
-                        self.chat_log.append(("openai", collab_answer))
-                        output_messages.append(("openai", collab_answer))
-                        self.openai_history.append({"role": "assistant", "content": collab_answer})
-                        self.gemini_history.append({"role": "assistant", "content": collab_answer})
-                        return output_messages
-                try:
-                    collab_answer = a2a_collaboration.run(user_input, self.openai_client, self.gemini_client)
-                except Exception as e:
-                    collab_answer = f"Error during A2A collaboration: {e}"
-                self.openai_history.append({"role": "assistant", "content": collab_answer})
-                self.gemini_history.append({"role": "assistant", "content": collab_answer})
-                self.chat_log.append(("collab", collab_answer))
-                output_messages.append(("collab", collab_answer))
-            else:
-                try:
-                    response_o = self.openai_client.chat.completions.create(
-                        model=self.openai_model,
-                        messages=self.openai_history
-                    )
-                    answer_o = response_o.choices[0].message.content
-                except Exception as e:
-                    answer_o = f"Error communicating with OpenAI: {e}"
-                try:
-                    prompt = ""
-                    for msg in self.gemini_history:
-                        role = msg["role"]
-                        content = msg["content"]
-                        if role == "system":
-                            prompt += f"System: {content}\\n\\n"
-                        elif role == "user":
-                            prompt += f"User: {content}\\n"
-                        elif role == "assistant":
-                            prompt += f"Assistant: {content}\\n"
-                    prompt += "Assistant:"
-                    try:
-                        import google.generativeai as genai
-                    except ImportError:
-                        answer_g = "⚠️ google-generativeai library not installed."
-                    else:
-                        generative_model = genai.GenerativeModel(self.gemini_model)
-                        response_g = generative_model.generate_content(prompt)
-                        answer_g = response_g.text
-                except Exception as e:
-                    answer_g = f"Error communicating with Gemini: {e}"
-                self.openai_history.append({"role": "assistant", "content": answer_o})
-                self.gemini_history.append({"role": "assistant", "content": answer_g})
-                self.chat_log.append(("openai", answer_o))
-                self.chat_log.append(("gemini", answer_g))
-                output_messages.append(("openai", answer_o))
-                output_messages.append(("gemini", answer_g))
+        
         return output_messages
 
     def _sync_history_to(self, target_model: str):
         """
         Synchronize the conversation history into the target model's history list using the unified chat_log.
-        Ensures that when switching models, the new model sees the full conversation.
         """
         unified_messages = []
+        # Use OpenAI's system prompt as the base if available, otherwise a generic one
+        system_prompt_content = "You are a helpful AI assistant."
         if self.openai_history and self.openai_history[0]["role"] == "system":
-            system_prompt = self.openai_history[0]["content"]
-            unified_messages.append({"role": "system", "content": system_prompt})
+            system_prompt_content = self.openai_history[0]["content"]
+        elif self.gemini_history and self.gemini_history[0]["role"] == "system": # Fallback to Gemini's
+            system_prompt_content = self.gemini_history[0]["content"]
+        
+        unified_messages.append({"role": "system", "content": system_prompt_content})
+
         for sender, content in self.chat_log:
             if sender == "user":
                 unified_messages.append({"role": "user", "content": content})
-            else:
+            elif sender == "openai" or sender == "gemini": # Treat both as assistant for history
                 unified_messages.append({"role": "assistant", "content": content})
+        
         if target_model == "openai":
             self.openai_history = unified_messages.copy()
         elif target_model == "gemini":
             self.gemini_history = unified_messages.copy()
-        elif target_model == "both":
-            self.openai_history = unified_messages.copy()
-            self.gemini_history = unified_messages.copy()
+        # No "both" case needed with current GUI
 
     def confirm_overwrite(self):
         """
         Complete a pending file overwrite (if any) without requiring a user command.
-        Used in a GUI context where the user confirms via button rather than typing /overwrite.
-        Returns a tuple (sender, content) for the resulting assistant message, or None if no pending operation.
         """
         if self.pending_write_path is None:
             return None
@@ -511,12 +392,12 @@ class ChatSession:
             success_msg = f"✅ Saved `{rel_path}` ({bytes_written} bytes)"
         except Exception as e:
             success_msg = str(e) if str(e) else f"⚠️ Error writing to `{pending_name}`"
-        sender_label = "openai"
-        if self.last_model == "gemini":
-            sender_label = "gemini"
-        elif self.last_model == "both":
-            sender_label = "openai"
+        
+        # Determine sender based on the last model that was active
+        sender_label = self.last_model if self.last_model in ["openai", "gemini"] else "openai"
+
         self.chat_log.append((sender_label, success_msg))
+        # Log to both histories for robustness, though only one is active at a time
         self.openai_history.append({"role": "assistant", "content": success_msg})
         self.gemini_history.append({"role": "assistant", "content": success_msg})
         self.pending_write_path = None

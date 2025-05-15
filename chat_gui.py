@@ -16,48 +16,68 @@ chat_session = st.session_state.chat_session
 
 # Sidebar - API status and controls
 st.sidebar.header("Model Selection & Settings")
-# Top-level model choice (provider)
-model_display = st.sidebar.selectbox(
-    "Choose Model Provider",
-    ["OpenAI", "Gemini", "Both (OpenAI + Gemini)"],
-    index=0 if "selected_model" not in st.session_state else {"openai": 0, "gemini": 1, "both": 2}[st.session_state.selected_model],
+
+# --- Start of new model selection logic ---
+openai_models_list = [
+    "gpt-4.1", "gpt-4.1-mini", "gpt-4.1-nano",
+    "gpt-4o-latest", "o4-mini", "o3",
+]
+gemini_models_list = [
+    "gemini-2.5-pro-preview-05-06",
+    "gemini-2.5-flash-preview-04-17",
+]
+
+# Create a list of (display_name, model_name, provider) tuples
+# For now, display_name and model_name are the same.
+all_models_structured = [
+    (name, name, "openai") for name in openai_models_list
+] + [
+    (name, name, "gemini") for name in gemini_models_list
+]
+
+model_display_names = [item[0] for item in all_models_structured]
+
+# Determine default index for the unified dropdown
+current_selected_model_name = st.session_state.get("selected_model_name", chat_session.openai_model) # Default to openai_model
+if current_selected_model_name not in model_display_names:
+    # If current is a Gemini model and not in combined list (e.g. from previous structure)
+    current_selected_model_name = st.session_state.get("gemini_model_name", chat_session.gemini_model)
+    if current_selected_model_name not in model_display_names:
+        current_selected_model_name = openai_models_list[0] # Fallback to first OpenAI model
+
+default_idx = 0
+if current_selected_model_name in model_display_names:
+    default_idx = model_display_names.index(current_selected_model_name)
+
+chosen_display_model = st.sidebar.selectbox(
+    "Choose Model",
+    model_display_names,
+    index=default_idx,
+    key="selected_model_name" # Store the chosen display name
 )
 
-# Available model variants
-openai_models = [
-    "gpt-4o-mini",
-    "gpt-4o",
-    "gpt-4o-2024-05-13",
-    "gpt-4-turbo",
-    "gpt-3.5-turbo-0125",
-]
+# Find the chosen model details (name and provider)
+selected_model_name = chosen_display_model
+selected_provider = "openai" # Default provider
+for _, name, provider_val in all_models_structured:
+    if name == chosen_display_model:
+        selected_provider = provider_val
+        break
 
-gemini_models = [
-    "gemini-2.5-pro-preview-05-06",
-    "gemini-1.5-flash",
-    "gemini-1.5-pro",
-]
+# Update chat_session with the specific model and globally set provider for process_user_message
+st.session_state.active_provider = selected_provider
+if selected_provider == "openai":
+    chat_session.openai_model = selected_model_name
+    # Ensure gemini_model on chat_session is also a valid default if user switches provider later
+    if not hasattr(chat_session, 'gemini_model') or chat_session.gemini_model not in gemini_models_list:
+        chat_session.gemini_model = gemini_models_list[0]
+elif selected_provider == "gemini":
+    chat_session.gemini_model = selected_model_name
+    # Ensure openai_model on chat_session is also a valid default
+    if not hasattr(chat_session, 'openai_model') or chat_session.openai_model not in openai_models_list:
+        chat_session.openai_model = openai_models_list[0]
 
-# Model variant selection
-if model_display in ("openai", "both"):
-    default_idx = openai_models.index(st.session_state.get("openai_model", chat_session.openai_model)) if st.session_state.get("openai_model", chat_session.openai_model) in openai_models else 0
-    openai_choice = st.sidebar.selectbox("OpenAI model", openai_models, index=default_idx, key="openai_model")
-    chat_session.openai_model = openai_choice
-
-if model_display in ("gemini", "both"):
-    default_g_idx = gemini_models.index(st.session_state.get("gemini_model", chat_session.gemini_model)) if st.session_state.get("gemini_model", chat_session.gemini_model) in gemini_models else 0
-    gemini_choice = st.sidebar.selectbox("Gemini model", gemini_models, index=default_g_idx, key="gemini_model")
-    chat_session.gemini_model = gemini_choice
-
-st.session_state.selected_model = model_display
-
-# Collaborative mode checkbox (only when both models selected)
-use_a2a = False
-if model_display == "both":
-    use_a2a = st.sidebar.checkbox("Enable collaboration (A2A)", value=st.session_state.get("use_a2a", False),
-                                  key="use_a2a")
-else:
-    st.session_state.use_a2a = False
+# --- End of new model selection logic ---
 
 # Display API key status
 openai_status = "✅ Connected" if chat_session.openai_available else (
@@ -103,6 +123,5 @@ with st.form(key="chat_form", clear_on_submit=True):
     submitted = st.form_submit_button("Send")
     if submitted and user_message.strip():
         with st.spinner("Waiting for response..."):
-            chat_session.process_user_message(user_message, model_choice=model_display,
-                                              use_a2a=st.session_state.get("use_a2a", False))
+            chat_session.process_user_message(user_message, model_choice=st.session_state.active_provider, specific_model_name=selected_model_name)
         st.rerun()
