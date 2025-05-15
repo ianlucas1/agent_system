@@ -16,3 +16,8 @@ reports/
 data/
 exec_requests/
 inbox/
+
+# Coverage artifacts
+.coverage
+htmlcov/
+coverage.xml
