@@ -1,3 +1,5 @@
 python-dotenv
 openai
-google-generativeai 
+google-generativeai
+streamlit
+google-a2a 

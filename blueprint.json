@@ -40,6 +40,7 @@
   "config_defaults": {
     "enable_mcp": false,
     "enable_a2a": false,
+    "enable_gui": true,
     "auto_merge": true,
     "max_tokens_per_day": 1000000,
     "prefer_container": true,
