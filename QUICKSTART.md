@@ -80,12 +80,16 @@ The project is configured to use a `pyenv` virtual environment named `agent_syst
     ```
     Your terminal prompt should now show `(agent_system-venv)`.
 
-### 5. Install Dependencies
+### 5. Install Dependencies & Editable Package
 
-With the `agent_system-venv` active, install the required Python packages:
+With the `agent_system-venv` active, install the required Python packages **and make the project editable**:
 
 ```bash
+# Core dependencies
 pip install -r requirements.txt
+
+# Editable install so `import src.*` works everywhere
+pip install -e .
 ```
 
 ### 6. API Key Setup (`.env` file)

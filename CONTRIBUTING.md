@@ -23,6 +23,9 @@ pytest          # includes coverage gate via pytest.ini
 mypy src || true   # non-blocking for now – tighten later
 bandit -q -r src   # security scan
 
+# Ensure package is installed in editable mode once per clone
+pip install -e .
+
 # Stage *everything* (tracked & untracked) so nothing is missed
 # The -A flag catches new files you created.
 git add -A
@@ -45,25 +48,15 @@ gh pr ready <number>
 # Check CI status
 gh pr checks <number>
 
-# Merge (deletes remote & local branch)
+# Merge after CI passes (deletes remote & local branch)
 printf "y\n" | gh pr merge <number> --merge --delete-branch
-```
 
-*(Replace `<number>` with the PR number shown by GitHub.)*
-
----
-## 3  Helper Script (optional)
-
-You can also run `./scripts/dev_commit.sh "feat: message"` which performs steps 1 & 2 automatically (see the script for details).
-
----
-## 4  Pre-commit Hooks (optional but recommended)
-
-We ship a `.pre-commit-config.yaml` that runs Ruff, Bandit, and a quick test subset before each commit.  Enable it once per clone:
+# Post-merge tidy-up
+#   • Switch back to main and pull latest
+#   • Delete the now-merged feature branch locally if not auto-deleted
 
 ```bash
-pip install pre-commit
-pre-commit install
+git checkout main
+git pull --ff-only origin main
+git branch -d feat/<topic>  # if still present locally
 ```
-
-Afterwards, bad commits are blocked automatically. 
