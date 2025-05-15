@@ -1,5 +1,7 @@
 # Autonomous Ethereum Valuation Agent
 
+[![Docs](https://img.shields.io/badge/docs-latest-brightgreen)](https://<username>.github.io/agent_system/)
+
 This project seeds an autonomous agent that will grow—through its own iterative planning and coding—into a production-grade Ethereum valuation framework grounded in rigorous data analysis and PhD-level research.
 
 ## Bootstrapping the Agent
