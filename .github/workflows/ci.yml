@@ -38,9 +38,8 @@ jobs:
           # Remove transient files that tests may create which would otherwise
           # appear as modified and fail the cleanliness check.
           rm -rf agent_workspace/
-          # If the context file is tracked, restore it to its committed state so
-          # there are no diff markers.
-          git checkout -- agent_workspace/context.json || true
+          # Restore any tracked files that were removed so the working tree matches HEAD.
+          git checkout -- agent_workspace || true
       - name: Ensure repo clean (no untracked files)
         run: |
           git status --porcelain
