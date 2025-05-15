@@ -24,3 +24,6 @@ coverage.xml
 
 # Build artefacts
 *.egg-info/
+
+# MkDocs build directory
+site/

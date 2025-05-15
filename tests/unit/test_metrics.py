@@ -42,10 +42,11 @@ class TestMetrics(unittest.TestCase):
         metrics_manager = MetricsManager()
 
         self.assertTrue(metrics_manager.enabled)
-        self.assertIsNotInstance(metrics_manager.agents_spawned_total, DummyCounter)
-        self.assertIsNotInstance(metrics_manager.cli_calls_total, DummyCounter)
-        self.assertIsNotInstance(metrics_manager.qa_pass_total, DummyCounter)
-        self.assertIsNotInstance(metrics_manager.qa_fail_total, DummyCounter)
+        # Ensure we are using real counters, not DummyCounter
+        self.assertFalse(isinstance(metrics_manager.agents_spawned_total, DummyCounter))
+        self.assertFalse(isinstance(metrics_manager.cli_calls_total, DummyCounter))
+        self.assertFalse(isinstance(metrics_manager.qa_pass_total, DummyCounter))
+        self.assertFalse(isinstance(metrics_manager.qa_fail_total, DummyCounter))
 
         # Check that the HTTP server was attempted to be started
         mock_start_http_server.assert_called_once_with(9090, registry=metrics_manager._registry)
@@ -86,6 +87,7 @@ class TestMetrics(unittest.TestCase):
         ])
 
     @patch.dict(os.environ, {'ENABLE_METRICS': '1'}, clear=True)
+    @patch('src.shared.metrics.PROMETHEUS_AVAILABLE', False)
     @patch('src.shared.metrics.start_http_server')
     def test_metrics_enabled_prometheus_not_available(self, mock_start_http_server):
         """Metrics should be disabled if prometheus_client is not available even if ENABLE_METRICS is set."""
@@ -93,7 +95,11 @@ class TestMetrics(unittest.TestCase):
         metrics_manager = MetricsManager()
 
         self.assertFalse(metrics_manager.enabled)
+        # Ensure we are using real counters, not DummyCounter
         self.assertIsInstance(metrics_manager.agents_spawned_total, DummyCounter)
+        self.assertIsInstance(metrics_manager.cli_calls_total, DummyCounter)
+        self.assertIsInstance(metrics_manager.qa_pass_total, DummyCounter)
+        self.assertIsInstance(metrics_manager.qa_fail_total, DummyCounter)
         mock_start_http_server.assert_not_called()
         snapshot = metrics_manager.get_snapshot()
         self.assertEqual(snapshot, {'status': 'Metrics disabled'})
