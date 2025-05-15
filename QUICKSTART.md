@@ -7,7 +7,7 @@ This guide helps you get the AI Chat Interface up and running.
 Once the first-time setup (see below) is complete, follow these steps each time you want to use the chat interface:
 
 1.  **Open Your Terminal in the Project Directory**:
-    Navigate to the project root (`/Users/ianlucas/agent_system`).
+    Navigate to the project root (e.g., `your/path/to/agent_system`).
 
 2.  **Automatic Virtual Environment Activation**:
     If `direnv` is set up correctly (as per first-time setup), it will automatically detect the `.envrc` and `.python-version` files and activate the `agent_system-venv` virtual environment. Your terminal prompt should change to indicate this (e.g., `(agent_system-venv) ...`).
@@ -21,7 +21,7 @@ Once the first-time setup (see below) is complete, follow these steps each time 
     This will start the web server and should automatically open the chat interface in your default web browser.
 
 4.  **API Keys**:
-    The application requires API keys for OpenAI and/or Google Gemini. Ensure these are correctly set up in a `.env` file located at `/Users/ianlucas/agent_system/.env`. See the "API Key Setup" section under "First-Time Setup" for details.
+    The application requires API keys for OpenAI and/or Google Gemini. Ensure these are correctly set up in a `.env` file located in the project root (`./.env`). See the "API Key Setup" section under "First-Time Setup" for details.
 
 4.5 **Command-Line Interface (optional)**:
     To run the text-only CLI instead of the GUI:
@@ -94,7 +94,7 @@ pip install -e .
 
 ### 6. API Key Setup (`.env` file)
 
-1.  Create a file named `.env` in the project root (`/Users/ianlucas/agent_system/.env`).
+1.  Create a file named `.env` in the project root (`./.env`).
 2.  Add your API keys to this file in the following format:
     ```env
     OPENAI_API_KEY="your_openai_api_key_here"

@@ -3,8 +3,8 @@
   "phased_self_implementation_plan": {
     "phase_1": "Environment audit and tool-chain discovery",
     "phase_2": "Core system generation & folder scaffolding",
-    "phase_3": "Data collection & research corpus build-out",
-    "phase_4": "Model development & validation",
+    "phase_3": "Advanced Tooling & Agent Capabilities Development",
+    "phase_4": "Sophisticated Collaboration Strategies & Memory Architecture Enhancements",
     "phase_5": "CI/CD, containerization (optional), production hardening"
   },
   "governance": {
@@ -18,7 +18,7 @@
     "optional_cli": "src/interfaces/cli.py"
   },
   "quality_assurance": {
-    "north_star_metrics": ["model_accuracy", "data_freshness", "cost_efficiency"],
+    "north_star_metrics": ["task_completion_rate", "agent_autonomy_level", "tool_extensibility", "user_workflow_efficiency", "system_reliability"],
     "cadence": "after first merge, then every 50 merges"
   },
   "experiential_learning": {
@@ -38,8 +38,8 @@
     "budget_pause": 0.8
   },
   "config_defaults": {
-    "enable_mcp": false,
-    "enable_a2a": false,
+    "enable_mcp": true,
+    "enable_a2a": true,
     "enable_gui": true,
     "auto_merge": true,
     "max_tokens_per_day": 1000000,

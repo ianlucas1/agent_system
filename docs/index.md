@@ -2,7 +2,7 @@
 
 Welcome to the **agent_system** documentation site.
 
-This project seeds an autonomous software-development agent that can plan, code, and self-improve through iterative feedback loops.  The long-term goal is a production-grade Ethereum valuation framework powered by rigorous data analysis and research.
+This project focuses on providing a robust framework for multi-agent LLM orchestration and collaboration. It features an interactive Streamlit GUI as the primary interface, an A2A-lite workflow, a shared ContextBus (MCP-lite memory), an extensible ToolRegistry, and built-in observability and quality gates.
 
 Use the sidebar (or the links below) to navigate:
 
@@ -21,6 +21,6 @@ Use the sidebar (or the links below) to navigate:
 
 ## Contributing
 
-See the [CONTRIBUTING guide](https://github.com/<username>/agent_system/blob/main/CONTRIBUTING.md) for a concise development loop and PR checklist.
+See the [CONTRIBUTING guide](https://github.com/ianlucas1/agent_system/blob/main/CONTRIBUTING.md) for a concise development loop and PR checklist.
 
 Happy building! 🚀 

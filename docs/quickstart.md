@@ -7,7 +7,7 @@ This page provides a quick guide to getting started with the agent_system projec
 Clone the repository:
 
 ```bash
-git clone <repository_url>
+git clone https://github.com/ianlucas1/agent_system.git
 cd agent_system
 ```
 
@@ -15,12 +15,14 @@ Install the dependencies:
 
 ```bash
 pip install -r requirements.txt
+# Editable install for src/
+pip install -e .
 ```
 
 Run the application:
 
 ```bash
-streamlit run src/bootstrap.py
+streamlit run src/interfaces/gui.py
 ```
 
 ## 2. One-Minute Demo
