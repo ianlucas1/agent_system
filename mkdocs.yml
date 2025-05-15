@@ -1,6 +1,6 @@
 site_name: agent_system Documentation
-site_url: https://<username>.github.io/agent_system/
-repo_url: https://github.com/<username>/agent_system/
+site_url: https://ianlucas1.github.io/agent_system/
+repo_url: https://github.com/ianlucas1/agent_system/
 edit_uri: edit/main/
 
 nav:

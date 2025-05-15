@@ -1,8 +1,8 @@
-# Autonomous Ethereum Valuation Agent
+# Autonomous Multi-Agent System with A2A/MCP-lite Core
 
-[![Docs](https://img.shields.io/badge/docs-latest-brightgreen)](https://<username>.github.io/agent_system/)
+[![Docs](https://img.shields.io/badge/docs-latest-brightgreen)](https://ianlucas1.github.io/agent_system/)
 
-This project seeds an autonomous agent that will grow—through its own iterative planning and coding—into a production-grade Ethereum valuation framework grounded in rigorous data analysis and PhD-level research.
+This project is an interactive Streamlit application that lets a human (or supervising LLM) orchestrate **multiple cooperative LLM agents**. It features an explicit *A2A-lite* workflow (e.g., via `/workflow` triggering Planner → Coder → QualityGate → Reviewer), a shared, file-locked **ContextBus** (our *MCP-lite* memory), an extensible **ToolRegistry** (file ops, shell, git/gh, memory, workflow, etc.), built-in observability (Prometheus toggle, `/metrics`), strict quality gates (Ruff, pytest, MyPy/Bandit for touched files, auto QA for code-generating agents), and live documentation (MkDocs GH-Pages). The GUI serves as the central cockpit for these operations.
 
 ## Bootstrapping the Agent
 
