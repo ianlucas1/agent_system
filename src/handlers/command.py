@@ -20,6 +20,7 @@ class CommandType(Enum):
     LIST = auto()
     WRITE = auto()
     OVERWRITE = auto()
+    RUN = auto()
     UNKNOWN = auto()
 
 
@@ -58,6 +59,13 @@ class CommandHandler:
                     parts[1].strip() if len(parts) >= 2 and parts[1].strip() else "."
                 )
                 return Command(CommandType.LIST, args=dir_path)
+            elif cmd_token == "/run" or cmd_token == "/cli":
+                if len(parts) < 2 or not parts[1].strip():
+                    return Command(CommandType.UNKNOWN, args="Usage: /run <command>")
+                # Everything after the first space is treated as the raw command string
+                # (allows spaces within the command itself).
+                raw_command = stripped_input[len(cmd_token) :].strip()
+                return Command(CommandType.RUN, args=raw_command)
             elif cmd_token == "/write":
                 if len(parts) < 3:
                     return Command(
@@ -240,6 +248,16 @@ class CommandHandler:
                     logger.info(
                         f"Overwrite successful for {pending_filename}"
                     )  # Added log
+
+            elif parsed_command.command_type == CommandType.RUN:
+                raw_cmd = parsed_command.args
+                logger.debug(f"Executing RUN command: {raw_cmd}")
+
+                from src.tools.shell_command import ShellCommandTool  # Local import to avoid cycles
+
+                shell_tool = ShellCommandTool()  # Could also fetch from registry but instantiation is lightweight
+                tool_input = ToolInput(operation_name="run", args={"command": raw_cmd})
+                tool_output = shell_tool.execute(tool_input)
 
             elif parsed_command.command_type == CommandType.UNKNOWN:
                 logger.warning(
