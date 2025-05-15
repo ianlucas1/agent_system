@@ -1,6 +1,6 @@
 import os
 import shutil
-import subprocess
+import subprocess  # nosec B404 # Subprocess is used for running quality gate tools (ruff, pytest, mypy, bandit) in a controlled temporary directory.
 from typing import Any, Dict, List, Tuple
 
 from src.shared.context_bus import ContextBus
@@ -80,7 +80,7 @@ class QualityGateTool(Tool):
 
                 for check_name, command, is_blocking in checks:
                     print(f"Running {check_name} in {tmp_dir}...")
-                    result = subprocess.run(
+                    result = subprocess.run(  # nosec B603 # Commands are fixed internal strings for quality checks, run with shell=False.
                         command,
                         cwd=tmp_dir,
                         capture_output=True,
