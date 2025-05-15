@@ -11,6 +11,7 @@ from typing import List
 
 from .base import Tool, ToolInput, ToolOutput
 from .registry import ToolRegistry
+from ..shared.metrics import MetricsManager
 
 logger = logging.getLogger(__name__)
 
@@ -48,6 +49,7 @@ class GitHubCLITool(Tool):
 
     # -----------------------------------------------------------------
     def execute(self, tool_input: ToolInput) -> ToolOutput:  # noqa: D401
+        MetricsManager().cli_calls_total.inc()
         payload = tool_input.args or {}
         tool = payload.get("tool")
         args_str = payload.get("args", "")

@@ -5,4 +5,5 @@ python-a2a==0.5.5          # Google Agent-to-Agent protocol
 streamlit
 tiktoken
 filelock
-ruff 
+ruff
+prometheus_client 

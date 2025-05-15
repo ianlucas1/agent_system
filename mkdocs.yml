@@ -20,4 +20,4 @@ theme:
     - content.code.copy
 
 plugins:
-  - mermaid 
+  - mermaid2 

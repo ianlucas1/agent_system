@@ -7,6 +7,7 @@ from src.shared.context_bus import ContextBus
 from src.shared.workspace import WorkspaceManager
 from src.shared.apply_utils import apply_patch
 from src.tools.base import Tool
+from ..shared.metrics import MetricsManager
 
 
 class QualityGateTool(Tool):
@@ -110,11 +111,13 @@ class QualityGateTool(Tool):
                         shutil.copy2(os.path.join(tmp_dir, rel_path), real_path)
                     status = "PASS"
                     log_message = f"{agent_name}: PASS - {message}"
+                    MetricsManager().qa_pass_total.inc()
                 else:
                     # Otherwise return the failure log
                     print("QA checks failed. Changes not synced.")
                     status = "FAIL"
                     log_message = f"{agent_name}: FAIL - {message}"
+                    MetricsManager().qa_fail_total.inc()
 
             except Exception as e:
                 status = "ERROR"

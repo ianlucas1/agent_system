@@ -25,12 +25,13 @@ components such as :pyclass:`src.core.chat_session.ChatSession`.
 from __future__ import annotations
 
 import logging
-import subprocess
+import subprocess  # nosec B404
 import textwrap
 from typing import List
 
 from .base import Tool, ToolInput, ToolOutput
 from .registry import ToolRegistry
+from ..shared.metrics import MetricsManager
 
 logger = logging.getLogger(__name__)
 
@@ -82,6 +83,7 @@ class ShellCommandTool(Tool):
                 args={"command": "git status"}
             )
         """
+        MetricsManager().cli_calls_total.inc()
         op = tool_input.operation_name.lower().strip()
         if op not in {"run", "execute", "cli"}:
             return ToolOutput(
@@ -107,7 +109,7 @@ class ShellCommandTool(Tool):
         try:
             # We purposely run through the shell to allow simple commands like
             # "echo 'hello world'" without needing to parse quoting properly.
-            completed = subprocess.run(
+            completed = subprocess.run(  # nosec B602 – user passes command explicitly
                 raw_cmd,
                 shell=True,
                 capture_output=True,
