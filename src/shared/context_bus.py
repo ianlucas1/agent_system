@@ -1,6 +1,7 @@
 import json
 import os
 from pathlib import Path
+from .lock_utils import file_lock, ContextBusLockTimeout
 
 
 class ContextBusFullError(Exception):
@@ -54,29 +55,41 @@ class ContextBus:
 
     def get(self, key: str) -> str | None:
         """Retrieve the value for *key*, or None if absent."""
-        data = self._load_data()
+        try:
+            with file_lock(self.path):
+                data = self._load_data()
+        except ContextBusLockTimeout:
+            # Reraise lock timeout
+            raise
         return data.get(key)
 
     def set(self, key: str, value: str) -> None:
         """Set *key* to *value*, persisting to disk (no size guard)."""
-        data = self._load_data()
-        data[key] = value
-        # Atomic write without enforcing size limit
-        tmp_path = self.path.parent / (self.path.name + ".tmp")
-        content = json.dumps(data, ensure_ascii=False).encode("utf-8")
-        with open(tmp_path, "wb") as tmp_file:
-            tmp_file.write(content)
-            tmp_file.flush()
-            os.fsync(tmp_file.fileno())
-        os.replace(tmp_path, self.path)
+        try:
+            with file_lock(self.path):
+                data = self._load_data()
+                data[key] = value
+                tmp_path = self.path.parent / (self.path.name + ".tmp")
+                content = json.dumps(data, ensure_ascii=False).encode("utf-8")
+                with open(tmp_path, "wb") as tmp_file:
+                    tmp_file.write(content)
+                    tmp_file.flush()
+                    os.fsync(tmp_file.fileno())
+                os.replace(tmp_path, self.path)
+        except ContextBusLockTimeout:
+            raise
 
     def append(self, key: str, value: str) -> None:
         """Append *value* to existing key, separated by a newline marker."""
-        data = self._load_data()
-        existing = data.get(key, "")
-        if existing:
-            new_value = f"{existing}\n---\n{value}"
-        else:
-            new_value = value
-        data[key] = new_value
-        self._write_data(data) 
+        try:
+            with file_lock(self.path):
+                data = self._load_data()
+                existing = data.get(key, "")
+                if existing:
+                    new_value = f"{existing}\n---\n{value}"
+                else:
+                    new_value = value
+                data[key] = new_value
+                self._write_data(data)
+        except ContextBusLockTimeout:
+            raise 

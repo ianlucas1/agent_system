@@ -18,8 +18,12 @@ class StubMultiAgent:
     def __init__(self):
         self.calls = []
         self.outputs = ["PLAN", "CODE", "REVIEW"]
+        self.temp_dirs = []  # store temp dir values from env var
 
     def execute(self, tool_input: ToolInput) -> ToolOutput:
+        # record temp workspace from environment
+        import os
+        self.temp_dirs.append(os.environ.get("WORKSPACE_TEMP"))
         idx = len(self.calls)
         self.calls.append(tool_input)
         msg = self.outputs[idx]
@@ -62,4 +66,8 @@ def test_workflow_tool_implicit_key(dummy_bus, stub_multi):
     key = tool._slugify(task)
     assert dummy_bus.get(f"{key}.plan") == "PLAN"
     assert dummy_bus.get(f"{key}.code") == "CODE"
-    assert dummy_bus.get(f"{key}.review") == "REVIEW" 
+    assert dummy_bus.get(f"{key}.review") == "REVIEW"
+    # ensure temp_dirs recorded and are unique per agent step
+    assert hasattr(stub_multi, 'temp_dirs')
+    assert len(stub_multi.temp_dirs) == 3
+    assert len(set(stub_multi.temp_dirs)) == 3 
