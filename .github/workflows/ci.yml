@@ -27,7 +27,11 @@ jobs:
       - name: Bandit
         run: bandit -q -r src
       - name: Tests & Coverage
-        run: pytest
+        run: |-
+          pytest -q
+          coverage xml
+      - name: Build Docs
+        run: mkdocs build --strict
       - name: Ensure repo clean (no untracked files)
         run: |
           git status --porcelain
