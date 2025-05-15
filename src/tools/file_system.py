@@ -1,4 +1,5 @@
 import os
+from typing import Optional, cast
 
 from .base import Tool, ToolInput, ToolOutput  # Relative import
 
@@ -126,7 +127,7 @@ class FileManagerTool(Tool):
                     return ToolOutput(
                         success=False, error="Path not provided for read operation."
                     )
-                content = read_file_content(path)  # Uses co-located function
+                file_content = read_file_content(path)  # Uses co-located function
                 _, ext = os.path.splitext(path)
                 lang = ""
                 if ext:
@@ -139,11 +140,11 @@ class FileManagerTool(Tool):
                         lang = "markdown"
                     elif ext in [".yaml", ".yml"]:
                         lang = "yaml"
-                formatted_content = f"Content of `{path}`:\n```{lang}\n{content}\n```"
+                formatted_content = f"Content of `{path}`:\n```{lang}\n{file_content}\n```"
                 return ToolOutput(
                     success=True,
                     message=formatted_content,
-                    data={"raw_content": content},
+                    data={"raw_content": file_content},
                 )
 
             elif op_name == "list":
@@ -158,7 +159,7 @@ class FileManagerTool(Tool):
 
             elif op_name == "write":
                 path = args.get("path")
-                content = args.get("content")
+                content: Optional[str] = args.get("content")
                 allow_overwrite = args.get("allow_overwrite", False)
 
                 if path is None:
@@ -167,8 +168,13 @@ class FileManagerTool(Tool):
                     )
                 if content is None:
                     return ToolOutput(
-                        success=False, error="Content not provided for write operation."
+                        success=False,
+                        error="Content not provided for write operation.",
                     )
+
+                # At this point `content` is definitely a string but mypy cannot
+                # infer that from the guard above, so we cast for type-checking.
+                content_str: str = cast(str, content)
 
                 abs_target_path = _resolve_path(path)
                 if os.path.exists(abs_target_path) and not allow_overwrite:
@@ -179,7 +185,7 @@ class FileManagerTool(Tool):
                         data={"status": "overwrite_required", "filename": filename},
                     )
                 bytes_written = write_content_to_file(
-                    path, content
+                    path, content_str
                 )  # Uses co-located function
                 return ToolOutput(
                     success=True,
