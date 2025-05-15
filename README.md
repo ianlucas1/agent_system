@@ -4,10 +4,10 @@ This project seeds an autonomous agent that will grow—through its own iterativ
 
 ## Bootstrapping the Agent
 
-Run the bootstrap script:
+Run the bootstrap script (creates workspace directories and seeds `session_bootstrap.json`):
 
 ```bash
-python3 bootstrap_agent.py
+python -m src.bootstrap
 ```
 
 The script creates the required workspace folders and a `session_bootstrap.json` file whose `next_task` is **toolchain_discovery**.
@@ -29,7 +29,7 @@ Logs and decision records live in **`logs/`** for you to inspect at any time.
 Ensure you have set your OpenAI and Google API keys in the `.env` file (`OPENAI_API_KEY` and `GOOGLE_API_KEY`). Launch the CLI with:
 
 ```bash
-python chat_cli.py [--model openai|gemini|both]
+python -m src.interfaces.cli [--model openai|gemini|both]
 ```
 
 By default, the CLI uses OpenAI. Use `--model gemini` to use Google Gemini, or `--model both` to query both models in parallel. In both mode, the CLI will display two answers (labeled by model). Type your messages and press Enter. To exit, type `exit` or `quit`.
@@ -47,7 +47,7 @@ All file operations are sandboxed to the project directory for safety. Errors or
 To launch the web interface, run:
 
 ```bash
-streamlit run chat_gui.py
+streamlit run src/interfaces/gui.py
 ```
 
 This will open a local browser app. The GUI displays the conversation and provides:

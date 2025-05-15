@@ -15,7 +15,7 @@
   "communication_protocols": {
     "agent_to_ceo": "exec_requests/*.md",
     "ceo_to_agent": "inbox/*.md",
-    "optional_cli": "chat_cli.py (future)"
+    "optional_cli": "src/interfaces/cli.py"
   },
   "quality_assurance": {
     "north_star_metrics": ["model_accuracy", "data_freshness", "cost_efficiency"],

@@ -16,12 +16,19 @@ Once the first-time setup (see below) is complete, follow these steps each time 
 3.  **Run the Chat GUI**:
     With the `agent_system-venv` active, run:
     ```bash
-    streamlit run chat_gui.py
+    streamlit run src/interfaces/gui.py
     ```
     This will start the web server and should automatically open the chat interface in your default web browser.
 
 4.  **API Keys**:
     The application requires API keys for OpenAI and/or Google Gemini. Ensure these are correctly set up in a `.env` file located at `/Users/ianlucas/agent_system/.env`. See the "API Key Setup" section under "First-Time Setup" for details.
+
+4.5 **Command-Line Interface (optional)**:
+    To run the text-only CLI instead of the GUI:
+
+    ```bash
+    python -m src.interfaces.cli --model openai   # or gemini | both
+    ```
 
 5.  **Dependencies (`requirements.txt`)**:
     You generally **do not** need to run `pip install -r requirements.txt` every time. This is only required during the first-time setup or if the `requirements.txt` file has been updated with new dependencies.
