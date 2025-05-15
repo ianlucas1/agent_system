@@ -20,6 +20,10 @@ class ChatSession:
     def __init__(self):
         # Initialize API clients and state
         load_dotenv()
+        # Default model names (can be overridden by GUI)
+        self.openai_model = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
+        self.gemini_model = os.getenv("GEMINI_MODEL", "gemini-2.5-pro-preview-05-06")
+
         self.openai_client = None
         self.gemini_client = None
         self.openai_available = False
@@ -65,7 +69,7 @@ class ChatSession:
             try:
                 import google.generativeai as genai
                 genai.configure(api_key=google_api_key)
-                self.gemini_client = genai.GenerativeModel('gemini-2.5-pro-preview-05-06')
+                self.gemini_client = genai.GenerativeModel(self.gemini_model)
                 self.gemini_available = True
             except ImportError:
                 self.gemini_client = None
@@ -374,7 +378,7 @@ class ChatSession:
         if model_choice == "openai":
             try:
                 response = self.openai_client.chat.completions.create(
-                    model="gpt-4o-mini",
+                    model=self.openai_model,
                     messages=self.openai_history
                 )
                 answer = response.choices[0].message.content
@@ -396,8 +400,14 @@ class ChatSession:
                     elif role == "assistant":
                         prompt += f"Assistant: {content}\n"
                 prompt += "Assistant:"
-                response = self.gemini_client.generate_content(prompt)
-                answer = response.text
+                try:
+                    import google.generativeai as genai
+                except ImportError:
+                    answer = "⚠️ google-generativeai library not installed."
+                else:
+                    generative_model = genai.GenerativeModel(self.gemini_model)
+                    response = generative_model.generate_content(prompt)
+                    answer = response.text
             except Exception as e:
                 answer = f"Error communicating with Gemini: {e}"
             self.gemini_history.append({"role": "assistant", "content": answer})
@@ -428,7 +438,7 @@ class ChatSession:
             else:
                 try:
                     response_o = self.openai_client.chat.completions.create(
-                        model="gpt-4o-mini",
+                        model=self.openai_model,
                         messages=self.openai_history
                     )
                     answer_o = response_o.choices[0].message.content
@@ -446,8 +456,14 @@ class ChatSession:
                         elif role == "assistant":
                             prompt += f"Assistant: {content}\\n"
                     prompt += "Assistant:"
-                    response_g = self.gemini_client.generate_content(prompt)
-                    answer_g = response_g.text
+                    try:
+                        import google.generativeai as genai
+                    except ImportError:
+                        answer_g = "⚠️ google-generativeai library not installed."
+                    else:
+                        generative_model = genai.GenerativeModel(self.gemini_model)
+                        response_g = generative_model.generate_content(prompt)
+                        answer_g = response_g.text
                 except Exception as e:
                     answer_g = f"Error communicating with Gemini: {e}"
                 self.openai_history.append({"role": "assistant", "content": answer_o})
