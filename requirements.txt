@@ -2,4 +2,5 @@ python-dotenv
 openai
 google-generativeai
 python-a2a==0.5.5          # Google Agent-to-Agent protocol
-streamlit 
+streamlit
+tiktoken 
