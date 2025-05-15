@@ -84,6 +84,14 @@ class CommandHandler:
                     return Command(CommandType.UNKNOWN, args="Usage: /agent <json-payload>")
                 payload = stripped_input[len(cmd_token):].strip()
                 return Command(CommandType.AGENT, args=payload)
+            elif cmd_token == "/git":
+                if len(parts) < 2 or not parts[1].strip():
+                    return Command(CommandType.UNKNOWN, args="Usage: /git <args>")
+                return Command(CommandType.RUN, args=("git", stripped_input[len(cmd_token):].strip()))
+            elif cmd_token == "/gh":
+                if len(parts) < 2 or not parts[1].strip():
+                    return Command(CommandType.UNKNOWN, args="Usage: /gh <args>")
+                return Command(CommandType.RUN, args=("gh", stripped_input[len(cmd_token):].strip()))
             else:
                 return Command(
                     CommandType.UNKNOWN, args=f"Unknown command: {cmd_token}"
@@ -256,18 +264,31 @@ class CommandHandler:
                     )  # Added log
 
             elif parsed_command.command_type == CommandType.RUN:
-                raw_cmd = parsed_command.args
-                logger.debug(f"Executing RUN command: {raw_cmd}")
+                if isinstance(parsed_command.args, tuple):
+                    cli_tool, cli_args = parsed_command.args
+                else:
+                    cli_tool, cli_args = None, parsed_command.args
+                if cli_tool in {"git", "gh"}:
+                    from src.tools.registry import ToolRegistry
+                    vcs_tool = ToolRegistry.get(f"vcs.{cli_tool}")
+                    if vcs_tool is None:
+                        from src.tools.github_cli import GitHubCLITool
+                        vcs_tool = GitHubCLITool()
+                    logger.info("/%s invoked: %s", cli_tool, cli_args[:120])
+                    tool_input = ToolInput(operation_name="run", args={"tool": cli_tool, "args": cli_args})
+                    tool_output = vcs_tool.execute(tool_input)
+                else:
+                    raw_cmd = cli_args
+                    logger.debug(f"Executing RUN command: {raw_cmd}")
+                    from src.tools.registry import ToolRegistry
 
-                from src.tools.registry import ToolRegistry
-
-                shell_tool = ToolRegistry.get("shell_command") or ToolRegistry.get("shell.command")
-                if shell_tool is None:
-                    from src.tools.shell_command import ShellCommandTool
-                    shell_tool = ShellCommandTool()
-                logger.info("/run invoked: %s", raw_cmd[:80])
-                tool_input = ToolInput(operation_name="run", args={"command": raw_cmd})
-                tool_output = shell_tool.execute(tool_input)
+                    shell_tool = ToolRegistry.get("shell_command") or ToolRegistry.get("shell.command")
+                    if shell_tool is None:
+                        from src.tools.shell_command import ShellCommandTool
+                        shell_tool = ShellCommandTool()
+                    logger.info("/run invoked: %s", raw_cmd[:80])
+                    tool_input = ToolInput(operation_name="run", args={"command": raw_cmd})
+                    tool_output = shell_tool.execute(tool_input)
 
             elif parsed_command.command_type == CommandType.AGENT:
                 payload = parsed_command.args
