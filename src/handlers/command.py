@@ -10,6 +10,9 @@ import logging  # Added
 from src.tools.base import ToolInput, ToolOutput  # Updated import
 from src.tools.file_system import FileManagerTool  # Updated import
 
+# Import MetricsManager
+from src.shared.metrics import MetricsManager
+
 # Forward declaration for type hinting ChatSession to avoid circular import
 if TYPE_CHECKING:
     from src.core.chat_session import ChatSession  # Updated import
@@ -26,6 +29,7 @@ class CommandType(Enum):
     AGENT = auto()
     WORKFLOW = auto()
     MEMORY = auto()
+    METRICS = auto()  # Added Metrics command type
     UNKNOWN = auto()
 
 
@@ -120,6 +124,8 @@ class CommandHandler:
                 if len(parts) < 2 or not parts[1].strip():
                     return Command(CommandType.UNKNOWN, args="Usage: /gh <args>")
                 return Command(CommandType.RUN, args=("gh", stripped_input[len(cmd_token):].strip()))
+            elif cmd_token == "/metrics": # Added /metrics command parsing
+                 return Command(CommandType.METRICS)
             else:
                 return Command(
                     CommandType.UNKNOWN, args=f"Unknown command: {cmd_token}"
@@ -377,6 +383,22 @@ class CommandHandler:
                 logger.info("/mem invoked: %s %s", op, key)
                 tool_input = ToolInput(operation_name=op, args={"key": key, "value": value})
                 tool_output = mem_tool.execute(tool_input)
+
+            elif parsed_command.command_type == CommandType.METRICS: # Added /metrics command handling
+                metrics_snapshot = MetricsManager().get_snapshot()
+                if 'status' in metrics_snapshot and metrics_snapshot['status'] == 'Metrics disabled':
+                    return "📊 Metrics disabled – set `ENABLE_METRICS=1` to enable."
+                else:
+                    response = "📊 Current Metrics:\n\n"
+                    for metric_name, data in metrics_snapshot.items():
+                        response += f"**{metric_name}:**\n"
+                        if data:
+                            for labels, value in data.items():
+                                label_str = ", ".join([f"{k}='{v}'" for k, v in labels.items()])
+                                response += f"  - {{}}{value}\n".format(f'{{{label_str}}} ' if label_str else '')
+                        else:
+                            response += "  - 0\n"
+                    return response
 
             elif parsed_command.command_type == CommandType.UNKNOWN:
                 logger.warning(

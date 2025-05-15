@@ -31,6 +31,7 @@ from typing import List
 
 from .base import Tool, ToolInput, ToolOutput
 from .registry import ToolRegistry
+from ..shared.metrics import MetricsManager
 
 logger = logging.getLogger(__name__)
 
@@ -82,6 +83,7 @@ class ShellCommandTool(Tool):
                 args={"command": "git status"}
             )
         """
+        MetricsManager().cli_calls_total.inc()
         op = tool_input.operation_name.lower().strip()
         if op not in {"run", "execute", "cli"}:
             return ToolOutput(

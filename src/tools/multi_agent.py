@@ -12,6 +12,7 @@ from typing import Dict, Optional
 
 from .base import Tool, ToolInput, ToolOutput
 from .registry import ToolRegistry
+from ..shared.metrics import MetricsManager
 
 logger = logging.getLogger(__name__)
 
@@ -83,6 +84,10 @@ class MultiAgentTool(Tool):
         except Exception as exc:
             logger.error("Failed to append to ContextBus: %s", exc)
         summary = f"🧑‍🤝‍🧑 {name} responded and context saved to {context_file}"
+
+        # Assuming each execution of MultiAgentTool counts as an agent spawned for metrics
+        MetricsManager().agents_spawned_total.inc()
+
         return ToolOutput(success=True, message=summary, data={"reply": reply, "file": context_file})
 
 
