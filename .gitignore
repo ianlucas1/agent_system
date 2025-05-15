@@ -21,3 +21,6 @@ inbox/
 .coverage
 htmlcov/
 coverage.xml
+
+# Build artefacts
+*.egg-info/
