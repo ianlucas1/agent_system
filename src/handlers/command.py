@@ -5,7 +5,7 @@ import re
 import os  # For os.path.basename
 import logging  # Added
 
-from src.tools.base import ToolInput  # Updated import
+from src.tools.base import ToolInput, ToolOutput  # Updated import
 from src.tools.file_system import FileManagerTool  # Updated import
 
 # Forward declaration for type hinting ChatSession to avoid circular import
@@ -21,6 +21,8 @@ class CommandType(Enum):
     WRITE = auto()
     OVERWRITE = auto()
     RUN = auto()
+    AGENT = auto()
+    MEMORY = auto()
     UNKNOWN = auto()
 
 
@@ -78,6 +80,38 @@ class CommandHandler:
                         CommandType.UNKNOWN, args="Usage: /overwrite <filename>"
                     )
                 return Command(CommandType.OVERWRITE, args=parts[1].strip())
+            elif cmd_token == "/agent":
+                if len(parts) < 2 or not parts[1].strip():
+                    return Command(CommandType.UNKNOWN, args="Usage: /agent <json-payload>")
+                payload = stripped_input[len(cmd_token):].strip()
+                return Command(CommandType.AGENT, args=payload)
+            elif cmd_token == "/mem":
+                rest = stripped_input[len(cmd_token):].strip()
+                mem_parts = rest.split(" ", 1)
+                op = mem_parts[0].lower()
+                if op == "get":
+                    if len(mem_parts) < 2 or not mem_parts[1].strip():
+                        return Command(CommandType.UNKNOWN, args="Usage: /mem get <key>")
+                    key = mem_parts[1].strip()
+                    return Command(CommandType.MEMORY, args=(op, key, None))
+                elif op in ("set", "append"):
+                    if len(mem_parts) < 2 or not mem_parts[1].strip():
+                        return Command(CommandType.UNKNOWN, args=f"Usage: /mem {op} <key> = <value>")
+                    remainder = mem_parts[1]
+                    if "=" not in remainder:
+                        return Command(CommandType.UNKNOWN, args=f"Usage: /mem {op} <key> = <value>")
+                    key, value = map(str.strip, remainder.split("=", 1))
+                    return Command(CommandType.MEMORY, args=(op, key, value))
+                else:
+                    return Command(CommandType.UNKNOWN, args=f"Unknown memory operation: {op}")
+            elif cmd_token == "/git":
+                if len(parts) < 2 or not parts[1].strip():
+                    return Command(CommandType.UNKNOWN, args="Usage: /git <args>")
+                return Command(CommandType.RUN, args=("git", stripped_input[len(cmd_token):].strip()))
+            elif cmd_token == "/gh":
+                if len(parts) < 2 or not parts[1].strip():
+                    return Command(CommandType.UNKNOWN, args="Usage: /gh <args>")
+                return Command(CommandType.RUN, args=("gh", stripped_input[len(cmd_token):].strip()))
             else:
                 return Command(
                     CommandType.UNKNOWN, args=f"Unknown command: {cmd_token}"
@@ -250,14 +284,71 @@ class CommandHandler:
                     )  # Added log
 
             elif parsed_command.command_type == CommandType.RUN:
-                raw_cmd = parsed_command.args
-                logger.debug(f"Executing RUN command: {raw_cmd}")
+                if isinstance(parsed_command.args, tuple):
+                    cli_tool, cli_args = parsed_command.args
+                else:
+                    cli_tool, cli_args = None, parsed_command.args
+                if cli_tool in {"git", "gh"}:
+                    from src.tools.registry import ToolRegistry
+                    vcs_tool = ToolRegistry.get(f"vcs.{cli_tool}")
+                    if vcs_tool is None:
+                        from src.tools.github_cli import GitHubCLITool
+                        vcs_tool = GitHubCLITool()
+                    logger.info("/%s invoked: %s", cli_tool, cli_args[:120])
+                    tool_input = ToolInput(operation_name="run", args={"tool": cli_tool, "args": cli_args})
+                    tool_output = vcs_tool.execute(tool_input)
+                else:
+                    raw_cmd = cli_args
+                    logger.debug(f"Executing RUN command: {raw_cmd}")
+                    from src.tools.registry import ToolRegistry
 
-                from src.tools.shell_command import ShellCommandTool  # Local import to avoid cycles
+                    shell_tool = ToolRegistry.get("shell_command") or ToolRegistry.get("shell.command")
+                    if shell_tool is None:
+                        from src.tools.shell_command import ShellCommandTool
+                        shell_tool = ShellCommandTool()
+                    logger.info("/run invoked: %s", raw_cmd[:80])
+                    tool_input = ToolInput(operation_name="run", args={"command": raw_cmd})
+                    tool_output = shell_tool.execute(tool_input)
 
-                shell_tool = ShellCommandTool()  # Could also fetch from registry but instantiation is lightweight
-                tool_input = ToolInput(operation_name="run", args={"command": raw_cmd})
-                tool_output = shell_tool.execute(tool_input)
+            elif parsed_command.command_type == CommandType.AGENT:
+                payload = parsed_command.args
+                logger.debug("Executing AGENT command with payload: %s", payload)
+                import json
+                try:
+                    data = json.loads(payload)
+                    required = {"agent_name", "role_prompt", "task"}
+                    if not required.issubset(data):
+                        missing = ", ".join(sorted(required - set(data)))
+                        return f"⚠️ Missing required keys in /agent payload: {missing}"
+                except json.JSONDecodeError:
+                    return "⚠️ Syntax error in /agent payload – please supply valid JSON `{...}`"
+
+                from src.tools.registry import ToolRegistry
+
+                agent_tool = ToolRegistry.get("agent.multi")
+                if agent_tool is None:
+                    from src.tools.multi_agent import MultiAgentTool
+                    agent_tool = MultiAgentTool()
+
+                logger.info("/agent invoked: %s", str(data)[:120])
+                tool_input = ToolInput(operation_name="spawn", args=data)
+                tool_output = agent_tool.execute(tool_input)
+
+                if tool_output.success:
+                    agent_name = data.get("agent_name", "Agent")
+                    prefix_msg = f"[{agent_name}] {tool_output.message}"
+                    tool_output = ToolOutput(success=True, message=prefix_msg, data=tool_output.data)
+
+            elif parsed_command.command_type == CommandType.MEMORY:
+                op, key, value = parsed_command.args
+                from src.tools.registry import ToolRegistry
+                mem_tool = ToolRegistry.get("memory")
+                if mem_tool is None:
+                    from src.tools.memory import MemoryTool
+                    mem_tool = MemoryTool()
+                logger.info("/mem invoked: %s %s", op, key)
+                tool_input = ToolInput(operation_name=op, args={"key": key, "value": value})
+                tool_output = mem_tool.execute(tool_input)
 
             elif parsed_command.command_type == CommandType.UNKNOWN:
                 logger.warning(

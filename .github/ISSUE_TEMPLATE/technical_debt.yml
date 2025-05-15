@@ -1,0 +1,30 @@
+name: "💳 Technical debt"
+description: Track a code-quality or security item to be fixed later.
+labels: [debt]
+assignees: []
+body:
+  - type: textarea
+    id: context
+    attributes:
+      label: Problem description
+      description: "Explain the Bandit/MyPy warning or other debt and why it's safe to defer."
+    validations:
+      required: true
+  - type: textarea
+    id: fix
+    attributes:
+      label: Suggested fix path
+      description: "Outline how the issue could be resolved when prioritised."
+    validations:
+      required: false
+  - type: dropdown
+    id: debt-type
+    attributes:
+      label: Debt category
+      options:
+        - type-safety
+        - security-hardening
+        - cleanup/refactor
+        - other
+    validations:
+      required: true 

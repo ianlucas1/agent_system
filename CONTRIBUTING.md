@@ -2,6 +2,9 @@
 
 Thank-you for helping improve this project!  Below is a concise, repeatable workflow that keeps the repository healthy and avoids the "untracked files" issue we occasionally hit.
 
+👉  For the philosophy behind these gates (and how we handle legacy Bandit/MyPy
+    findings) see `docs/quality_policy.md`.
+
 ---
 ## 1  Local Development Loop
 
@@ -17,11 +20,17 @@ git checkout -b feat/<topic>
 #    • Add / update tests
 #    • Update docs
 
-# Run quality checks early & often
+# Static style / linting – must pass
 ruff check .
-pytest          # includes coverage gate via pytest.ini
-mypy src || true   # non-blocking for now – tighten later
-bandit -q -r src   # security scan
+
+# Tests & coverage – must pass
+pytest -q          # coverage gate via pytest.ini
+
+# Static typing – **non-blocking in CI** for now but please fix errors locally
+mypy src || true   # remove `|| true` once codebase is type-clean
+
+# Security scan – advisory
+bandit -q -r src
 
 # Ensure package is installed in editable mode once per clone
 pip install -e .
@@ -45,18 +54,17 @@ gh pr create --base main --head $(git branch --show-current) --draft --fill
 # When ready for review
 gh pr ready <number>
 
-# Check CI status
-gh pr checks <number>
+# Check CI status – wait until all checks are green (✔)
+gh pr checks <number> --watch
 
-# Merge after CI passes (deletes remote & local branch)
+# Merge **only after CI passes** (also deletes remote & local branch)
 printf "y\n" | gh pr merge <number> --merge --delete-branch
 
 # Post-merge tidy-up
 #   • Switch back to main and pull latest
-#   • Delete the now-merged feature branch locally if not auto-deleted
+#   • Delete the now-merged feature branch locally if it was **not** auto-deleted
 
-```bash
 git checkout main
 git pull --ff-only origin main
-git branch -d feat/<topic>  # if still present locally
+git branch -d feat/<topic>
 ```
