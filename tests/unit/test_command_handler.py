@@ -6,6 +6,7 @@ import pytest
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../../')))
 from src.handlers.command import CommandHandler, CommandType
 from src.tools.file_system import FileManagerTool
+from src.tools.base import ToolOutput
 
 @pytest.fixture
 def handler():
@@ -63,3 +64,49 @@ def test_parse_missing_read(handler):
     assert cmd is not None
     assert cmd.command_type == CommandType.UNKNOWN
     assert 'Usage' in cmd.args 
+
+def test_cli_run_success(monkeypatch):
+    handler = CommandHandler(file_tool=FileManagerTool())
+
+    # stub ShellCommandTool
+    class StubShell:
+        def execute(self, ti):
+            return ToolOutput(success=True, message="```shell\nhello\n```")
+
+    from src.tools import registry as reg
+    monkeypatch.setattr(reg.ToolRegistry, "get", lambda key: StubShell() if "shell" in key else None)
+
+    cmd = handler.parse("/run echo hello", [])
+    assert cmd.command_type == CommandType.RUN
+    resp = handler.execute_command(cmd, chat_session=None, current_user_input="/run echo hello")
+    assert "hello" in resp
+
+
+def test_cli_run_empty():
+    handler = CommandHandler(file_tool=FileManagerTool())
+    cmd = handler.parse("/run", [])
+    assert cmd.command_type == CommandType.UNKNOWN
+
+
+def test_agent_payload_error(monkeypatch):
+    handler = CommandHandler(file_tool=FileManagerTool())
+    cmd = handler.parse("/agent { bad json", [])
+    resp = handler.execute_command(cmd, chat_session=None, current_user_input="/agent { bad json")
+    assert "Syntax error" in resp
+
+
+def test_agent_success(monkeypatch, tmp_path):
+    handler = CommandHandler(file_tool=FileManagerTool())
+
+    class StubAgent:
+        def execute(self, ti):
+            return ToolOutput(success=True, message="done", data={})
+    from src.tools import registry as reg
+    monkeypatch.setattr(reg.ToolRegistry, "get", lambda key: StubAgent() if key=="agent.multi" else None)
+
+    payload = {"agent_name": "PlannerAgent", "role_prompt": "plan", "task": "write"}
+    import json
+    cmd_str = "/agent " + json.dumps(payload)
+    cmd = handler.parse(cmd_str, [])
+    resp = handler.execute_command(cmd, chat_session=None, current_user_input=cmd_str)
+    assert resp.startswith("[PlannerAgent]") 

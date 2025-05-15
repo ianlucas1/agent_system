@@ -5,7 +5,7 @@ import re
 import os  # For os.path.basename
 import logging  # Added
 
-from src.tools.base import ToolInput  # Updated import
+from src.tools.base import ToolInput, ToolOutput  # Updated import
 from src.tools.file_system import FileManagerTool  # Updated import
 
 # Forward declaration for type hinting ChatSession to avoid circular import
@@ -21,6 +21,7 @@ class CommandType(Enum):
     WRITE = auto()
     OVERWRITE = auto()
     RUN = auto()
+    AGENT = auto()
     UNKNOWN = auto()
 
 
@@ -78,6 +79,11 @@ class CommandHandler:
                         CommandType.UNKNOWN, args="Usage: /overwrite <filename>"
                     )
                 return Command(CommandType.OVERWRITE, args=parts[1].strip())
+            elif cmd_token == "/agent":
+                if len(parts) < 2 or not parts[1].strip():
+                    return Command(CommandType.UNKNOWN, args="Usage: /agent <json-payload>")
+                payload = stripped_input[len(cmd_token):].strip()
+                return Command(CommandType.AGENT, args=payload)
             else:
                 return Command(
                     CommandType.UNKNOWN, args=f"Unknown command: {cmd_token}"
@@ -253,11 +259,44 @@ class CommandHandler:
                 raw_cmd = parsed_command.args
                 logger.debug(f"Executing RUN command: {raw_cmd}")
 
-                from src.tools.shell_command import ShellCommandTool  # Local import to avoid cycles
+                from src.tools.registry import ToolRegistry
 
-                shell_tool = ShellCommandTool()  # Could also fetch from registry but instantiation is lightweight
+                shell_tool = ToolRegistry.get("shell_command") or ToolRegistry.get("shell.command")
+                if shell_tool is None:
+                    from src.tools.shell_command import ShellCommandTool
+                    shell_tool = ShellCommandTool()
+                logger.info("/run invoked: %s", raw_cmd[:80])
                 tool_input = ToolInput(operation_name="run", args={"command": raw_cmd})
                 tool_output = shell_tool.execute(tool_input)
+
+            elif parsed_command.command_type == CommandType.AGENT:
+                payload = parsed_command.args
+                logger.debug("Executing AGENT command with payload: %s", payload)
+                import json
+                try:
+                    data = json.loads(payload)
+                    required = {"agent_name", "role_prompt", "task"}
+                    if not required.issubset(data):
+                        missing = ", ".join(sorted(required - set(data)))
+                        return f"⚠️ Missing required keys in /agent payload: {missing}"
+                except json.JSONDecodeError:
+                    return "⚠️ Syntax error in /agent payload – please supply valid JSON `{...}`"
+
+                from src.tools.registry import ToolRegistry
+
+                agent_tool = ToolRegistry.get("agent.multi")
+                if agent_tool is None:
+                    from src.tools.multi_agent import MultiAgentTool
+                    agent_tool = MultiAgentTool()
+
+                logger.info("/agent invoked: %s", str(data)[:120])
+                tool_input = ToolInput(operation_name="spawn", args=data)
+                tool_output = agent_tool.execute(tool_input)
+
+                if tool_output.success:
+                    agent_name = data.get("agent_name", "Agent")
+                    prefix_msg = f"[{agent_name}] {tool_output.message}"
+                    tool_output = ToolOutput(success=True, message=prefix_msg, data=tool_output.data)
 
             elif parsed_command.command_type == CommandType.UNKNOWN:
                 logger.warning(
