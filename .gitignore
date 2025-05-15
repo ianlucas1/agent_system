@@ -1,3 +1,18 @@
 .env
 .DS_Store
 __pycache__/
+*.pyc
+.ruff_cache/
+
+# Direnv
+.direnv/
+
+# Environment and logs
+logs/
+reports/
+.agent_workspace/
+
+# Data folders (consider if any small, essential data should be tracked)
+data/
+exec_requests/
+inbox/

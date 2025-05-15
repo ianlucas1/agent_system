@@ -1,30 +1,33 @@
-import os
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Optional
 import logging
 
 # Attempt to import API libraries
 try:
     from openai import OpenAI
+
     OPENAI_SDK_AVAILABLE = True
 except ImportError:
     OPENAI_SDK_AVAILABLE = False
-    OpenAI = None # Define for type hinting even if not available
+    OpenAI = None  # Define for type hinting even if not available
 
 try:
-    import tiktoken # Added for OpenAI token counting
+    import tiktoken  # Added for OpenAI token counting
+
     TIKTOKEN_AVAILABLE = True
 except ImportError:
     TIKTOKEN_AVAILABLE = False
 
 try:
     import google.generativeai as genai
+
     GOOGLE_SDK_AVAILABLE = True
 except ImportError:
     GOOGLE_SDK_AVAILABLE = False
-    genai = None # Define for type hinting
+    genai = None  # Define for type hinting
 
 # Get a logger for this module
 logger = logging.getLogger(__name__)
+
 
 class OpenAIClientManager:
     def __init__(self, api_key: Optional[str], default_model_name: str = "gpt-4o-mini"):
@@ -41,9 +44,13 @@ class OpenAIClientManager:
                 self.client = None
                 self._available = False
         elif not OPENAI_SDK_AVAILABLE:
-            logger.warning("OpenAI SDK not installed. OpenAIClientManager will be unavailable.")
+            logger.warning(
+                "OpenAI SDK not installed. OpenAIClientManager will be unavailable."
+            )
         elif not api_key:
-            logger.warning("OpenAI API key not provided. OpenAIClientManager will be unavailable.")
+            logger.warning(
+                "OpenAI API key not provided. OpenAIClientManager will be unavailable."
+            )
 
     @property
     def available(self) -> bool:
@@ -61,13 +68,12 @@ class OpenAIClientManager:
     def generate_response(self, history: List[Dict[str, str]]) -> str:
         if not self.available:
             return "⚠️ OpenAI model is not available (client not initialized or SDK missing)."
-        if not self.client: # Should be caught by self.available but as a safeguard
-             return "⚠️ OpenAI client is None, though manager reported as available."
+        if not self.client:  # Should be caught by self.available but as a safeguard
+            return "⚠️ OpenAI client is None, though manager reported as available."
 
         try:
             response = self.client.chat.completions.create(
-                model=self.model_name,
-                messages=history
+                model=self.model_name, messages=history
             )
             return response.choices[0].message.content
         except Exception as e:
@@ -80,9 +86,11 @@ class OpenAIClientManager:
             return 0
         if not self.available or not TIKTOKEN_AVAILABLE:
             # Fallback if client or tiktoken is not available
-            logger.warning("OpenAI client or tiktoken not available for token counting. Using word count.")
-            return len(text.split()) 
-        
+            logger.warning(
+                "OpenAI client or tiktoken not available for token counting. Using word count."
+            )
+            return len(text.split())
+
         try:
             # self.model_name should be the string name like "gpt-4o-mini"
             encoding = tiktoken.encoding_for_model(self.model_name)
@@ -92,20 +100,29 @@ class OpenAIClientManager:
             try:
                 encoding = tiktoken.get_encoding("cl100k_base")
             except Exception as e_enc:
-                logger.warning(f"Error getting tiktoken encoding (cl100k_base) for {self.model_name}: {e_enc}. Using word count.")
+                logger.warning(
+                    f"Error getting tiktoken encoding (cl100k_base) for {self.model_name}: {e_enc}. Using word count."
+                )
                 return len(text.split())
         except Exception as e_model_name:
-            logger.warning(f"Error getting tiktoken encoding for model {self.model_name}: {e_model_name}. Using word count.")
+            logger.warning(
+                f"Error getting tiktoken encoding for model {self.model_name}: {e_model_name}. Using word count."
+            )
             return len(text.split())
-        
+
         return len(encoding.encode(text))
 
+
 class GeminiClientManager:
-    def __init__(self, api_key: Optional[str], default_model_name: str = "gemini-2.5-pro-preview-05-06"):
+    def __init__(
+        self,
+        api_key: Optional[str],
+        default_model_name: str = "gemini-2.5-pro-preview-05-06",
+    ):
         self.client: Optional[genai.GenerativeModel] = None
         self.model_name: str = default_model_name
         self._available: bool = False
-        self._api_key: Optional[str] = api_key # Store api_key for re-initialization
+        self._api_key: Optional[str] = api_key  # Store api_key for re-initialization
 
         if api_key and GOOGLE_SDK_AVAILABLE:
             try:
@@ -113,14 +130,20 @@ class GeminiClientManager:
                 self.client = genai.GenerativeModel(self.model_name)
                 self._available = True
             except Exception as e:
-                logger.error(f"Failed to initialize Gemini client ({self.model_name}): {e}", exc_info=True)
+                logger.error(
+                    f"Failed to initialize Gemini client ({self.model_name}): {e}",
+                    exc_info=True,
+                )
                 self.client = None
                 self._available = False
         elif not GOOGLE_SDK_AVAILABLE:
-            logger.warning("Google Generative AI SDK not installed. GeminiClientManager will be unavailable.")
+            logger.warning(
+                "Google Generative AI SDK not installed. GeminiClientManager will be unavailable."
+            )
         elif not api_key:
-            logger.warning("Google API key not provided. GeminiClientManager will be unavailable.")
-
+            logger.warning(
+                "Google API key not provided. GeminiClientManager will be unavailable."
+            )
 
     @property
     def available(self) -> bool:
@@ -136,31 +159,36 @@ class GeminiClientManager:
         Returns True if successful or no change needed, False if re-initialization failed.
         """
         if not model_name:
-            return False # Or raise error? For now, just fail silently or log.
-        
+            return False  # Or raise error? For now, just fail silently or log.
+
         if self.model_name == model_name and self.client is not None:
-            return True # No change needed
+            return True  # No change needed
 
         self.model_name = model_name
-        
+
         if not self._api_key or not GOOGLE_SDK_AVAILABLE:
             # Cannot re-initialize if key or SDK was missing initially
             self._available = False
             self.client = None
-            logger.warning("Gemini client cannot be re-initialized: API key or SDK missing.")
+            logger.warning(
+                "Gemini client cannot be re-initialized: API key or SDK missing."
+            )
             return False
 
         # Attempt to re-initialize
         try:
             # genai.configure should have been called already
             self.client = genai.GenerativeModel(self.model_name)
-            self._available = True # Mark as available again if re-init succeeds
+            self._available = True  # Mark as available again if re-init succeeds
             logger.info(f"Gemini client re-initialized to model: {self.model_name}")
             return True
         except Exception as e:
-            logger.error(f"Error re-initializing Gemini client for model {self.model_name}: {e}", exc_info=True)
+            logger.error(
+                f"Error re-initializing Gemini client for model {self.model_name}: {e}",
+                exc_info=True,
+            )
             self.client = None
-            self._available = False # Mark as unavailable on failure
+            self._available = False  # Mark as unavailable on failure
             return False
 
     def _format_history_for_gemini(self, history: List[Dict[str, str]]) -> str:
@@ -181,7 +209,6 @@ class GeminiClientManager:
         # to prompt its response. Here we just concatenate the history.
         return "\n\n".join(prompt_parts)
 
-
     def generate_response(self, history: List[Dict[str, str]]) -> str:
         if not self.available:
             return "⚠️ Gemini model is not available (client not initialized or SDK missing)."
@@ -192,7 +219,7 @@ class GeminiClientManager:
         # Gemini's basic generate_content often takes a single string prompt.
         # The history needs to be formatted appropriately.
         # The ChatSession used to append "Assistant:" to the prompt. Let's ensure the manager gets the raw history.
-        
+
         prompt_string = self._format_history_for_gemini(history)
         # Add the final "Assistant:" to cue the model, if this is standard practice for the version of SDK/API.
         # Based on original ChatSession, it added "Assistant:" to a manually constructed prompt string.
@@ -213,8 +240,10 @@ class GeminiClientManager:
         # Or, `generate_content` can take a list of `glm.Content` objects.
         # Let's adapt to use the list of dicts more directly if the SDK supports it well.
         # For now, sticking to reconstructing the string prompt as per original ChatSession logic for minimal change.
-        
-        full_prompt = prompt_string + "\n\nAssistant:" # Mimicking original ChatSession prompt construction
+
+        full_prompt = (
+            prompt_string + "\n\nAssistant:"
+        )  # Mimicking original ChatSession prompt construction
 
         try:
             response = self.client.generate_content(full_prompt)
@@ -223,25 +252,31 @@ class GeminiClientManager:
             return response.text
         except Exception as e:
             logger.error(f"Error communicating with Gemini: {e}", exc_info=True)
-            return f"Error communicating with Gemini: {e}" 
+            return f"Error communicating with Gemini: {e}"
 
     def count_tokens(self, text: str) -> int:
         """Counts tokens in a string using the Gemini client SDK method or a fallback."""
         if not text:
             return 0
-        
-        if self.available and self.client and hasattr(self.client, 'count_tokens'):
+
+        if self.available and self.client and hasattr(self.client, "count_tokens"):
             try:
                 # Assuming self.client is the GenerativeModel instance
                 token_count_response = self.client.count_tokens(text)
                 return token_count_response.total_tokens
             except Exception as e:
-                logger.warning(f"Error using Gemini SDK count_tokens for model {self.model_name}: {e}. Using word count.")
-                return len(text.split()) # Fallback on error
+                logger.warning(
+                    f"Error using Gemini SDK count_tokens for model {self.model_name}: {e}. Using word count."
+                )
+                return len(text.split())  # Fallback on error
         else:
             # Fallback if client is not available or doesn't have count_tokens method
             if not self.available or not self.client:
-                logger.warning(f"Warning: Gemini client for model {self.model_name} not available for token counting. Using word count.")
-            elif not hasattr(self.client, 'count_tokens'):
-                 logger.warning(f"Warning: Gemini client for model {self.model_name} does not have count_tokens method. Using word count.")
-            return len(text.split()) 
+                logger.warning(
+                    f"Warning: Gemini client for model {self.model_name} not available for token counting. Using word count."
+                )
+            elif not hasattr(self.client, "count_tokens"):
+                logger.warning(
+                    f"Warning: Gemini client for model {self.model_name} does not have count_tokens method. Using word count."
+                )
+            return len(text.split())

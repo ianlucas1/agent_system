@@ -2,17 +2,17 @@ import os
 import json
 from datetime import datetime, timezone
 import logging
-from src import config # Ensures logging is configured if this is run standalone
 
 logger = logging.getLogger(__name__)
 
 WORKSPACE_DIRS = [
-    ".agent_workspace", # This path is relative to project root, ensure bootstrap is run from project root
+    ".agent_workspace",  # This path is relative to project root, ensure bootstrap is run from project root
     "logs",
     "inbox",
     "exec_requests",
-    "data"
+    "data",
 ]
+
 
 def ensure_dirs():
     logger.info("Ensuring workspace directories exist...")
@@ -28,29 +28,34 @@ def ensure_dirs():
             logger.error(f"Could not create directory {d}: {e}", exc_info=True)
             # Decide if this is a fatal error for bootstrap
 
+
 def write_session_bootstrap():
     logger.info("Writing session bootstrap file...")
     state = {
         "status": "initialized",
         "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
-        "next_task": "toolchain_discovery"
+        "next_task": "toolchain_discovery",
     }
     # Assuming .agent_workspace is at project root where this script is expected to be run from.
-    path = os.path.join(".agent_workspace", "session_bootstrap.json") 
+    path = os.path.join(".agent_workspace", "session_bootstrap.json")
     try:
         with open(path, "w") as f:
             json.dump(state, f, indent=2)
         logger.info(f"Session bootstrap file written to {path}")
     except Exception as e:
-        logger.error(f"Could not write session bootstrap file to {path}: {e}", exc_info=True)
+        logger.error(
+            f"Could not write session bootstrap file to {path}: {e}", exc_info=True
+        )
+
 
 def main():
     ensure_dirs()
     write_session_bootstrap()
     logger.info("Bootstrap complete ✓")
 
+
 if __name__ == "__main__":
     # If this script is run directly, ensure the current working directory is the project root
     # or adjust paths in WORKSPACE_DIRS and for session_bootstrap.json accordingly.
     # For now, assumes it's run from project root.
-    main() 
+    main()
