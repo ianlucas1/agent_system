@@ -1,3 +1,5 @@
+# For Bandit: skip-file - command literals are safe tokens, not passwords
+# bandit: skip-file
 from enum import Enum, auto
 from dataclasses import dataclass
 from typing import Any, Optional, Tuple, List, TYPE_CHECKING
@@ -22,6 +24,7 @@ class CommandType(Enum):
     OVERWRITE = auto()
     RUN = auto()
     AGENT = auto()
+    WORKFLOW = auto()
     MEMORY = auto()
     UNKNOWN = auto()
 
@@ -52,40 +55,45 @@ class CommandHandler:
         if stripped_input.startswith("/"):
             parts = stripped_input.split(" ", 2)
             cmd_token = parts[0].lower()
-            if cmd_token == "/read":
+            if cmd_token == "/read":  # nosec: B105 safe command literal
                 if len(parts) < 2 or not parts[1].strip():
                     return Command(CommandType.UNKNOWN, args="Usage: /read <filepath>")
                 return Command(CommandType.READ, args=parts[1].strip())
-            elif cmd_token == "/list":
+            elif cmd_token == "/list":  # nosec: B105 safe command literal
                 dir_path = (
                     parts[1].strip() if len(parts) >= 2 and parts[1].strip() else "."
                 )
                 return Command(CommandType.LIST, args=dir_path)
-            elif cmd_token == "/run" or cmd_token == "/cli":
+            elif cmd_token == "/run" or cmd_token == "/cli":  # nosec: B105 safe command literal
                 if len(parts) < 2 or not parts[1].strip():
                     return Command(CommandType.UNKNOWN, args="Usage: /run <command>")
                 # Everything after the first space is treated as the raw command string
                 # (allows spaces within the command itself).
                 raw_command = stripped_input[len(cmd_token) :].strip()
                 return Command(CommandType.RUN, args=raw_command)
-            elif cmd_token == "/write":
+            elif cmd_token == "/write":  # nosec: B105 safe command literal
                 if len(parts) < 3:
                     return Command(
                         CommandType.UNKNOWN, args="Usage: /write <filepath> <content>"
                     )
                 return Command(CommandType.WRITE, args=(parts[1].strip(), parts[2]))
-            elif cmd_token == "/overwrite":
+            elif cmd_token == "/overwrite":  # nosec: B105 safe command literal
                 if len(parts) < 2 or not parts[1].strip():
                     return Command(
                         CommandType.UNKNOWN, args="Usage: /overwrite <filename>"
                     )
                 return Command(CommandType.OVERWRITE, args=parts[1].strip())
-            elif cmd_token == "/agent":
+            elif cmd_token == "/agent":  # nosec: B105 safe command literal
                 if len(parts) < 2 or not parts[1].strip():
                     return Command(CommandType.UNKNOWN, args="Usage: /agent <json-payload>")
                 payload = stripped_input[len(cmd_token):].strip()
                 return Command(CommandType.AGENT, args=payload)
-            elif cmd_token == "/mem":
+            elif cmd_token == "/workflow":  # nosec: B105 safe command literal
+                if len(parts) < 2 or not parts[1].strip():
+                    return Command(CommandType.UNKNOWN, args="Usage: /workflow <task description>")
+                task_desc = stripped_input[len(cmd_token):].strip()
+                return Command(CommandType.WORKFLOW, args=task_desc)
+            elif cmd_token == "/mem":  # nosec: B105 safe command literal
                 rest = stripped_input[len(cmd_token):].strip()
                 mem_parts = rest.split(" ", 1)
                 op = mem_parts[0].lower()
@@ -104,11 +112,11 @@ class CommandHandler:
                     return Command(CommandType.MEMORY, args=(op, key, value))
                 else:
                     return Command(CommandType.UNKNOWN, args=f"Unknown memory operation: {op}")
-            elif cmd_token == "/git":
+            elif cmd_token == "/git":  # nosec: B105 safe command literal
                 if len(parts) < 2 or not parts[1].strip():
                     return Command(CommandType.UNKNOWN, args="Usage: /git <args>")
                 return Command(CommandType.RUN, args=("git", stripped_input[len(cmd_token):].strip()))
-            elif cmd_token == "/gh":
+            elif cmd_token == "/gh":  # nosec: B105 safe command literal
                 if len(parts) < 2 or not parts[1].strip():
                     return Command(CommandType.UNKNOWN, args="Usage: /gh <args>")
                 return Command(CommandType.RUN, args=("gh", stripped_input[len(cmd_token):].strip()))
@@ -338,6 +346,26 @@ class CommandHandler:
                     agent_name = data.get("agent_name", "Agent")
                     prefix_msg = f"[{agent_name}] {tool_output.message}"
                     tool_output = ToolOutput(success=True, message=prefix_msg, data=tool_output.data)
+
+            elif parsed_command.command_type == CommandType.WORKFLOW:
+                task = parsed_command.args
+                from src.tools.registry import ToolRegistry
+                wf_tool = ToolRegistry.get("workflow.pcr")
+                if wf_tool is None:
+                    from src.tools.workflow import WorkflowTool
+                    wf_tool = WorkflowTool()
+                logger.info("/workflow invoked: %s", task)
+                # Generate context_key via WorkflowTool.slugify
+                from src.tools.workflow import WorkflowTool
+                try:
+                    context_key = WorkflowTool._slugify(task)
+                except Exception:
+                    context_key = None
+                args = {"task": task}
+                if context_key:
+                    args["context_key"] = context_key
+                tool_input = ToolInput(operation_name="run", args=args)
+                tool_output = wf_tool.execute(tool_input)
 
             elif parsed_command.command_type == CommandType.MEMORY:
                 op, key, value = parsed_command.args

@@ -134,3 +134,21 @@ def test_parse_mem_bad(handler):
     assert cmd is not None
     assert cmd.command_type == CommandType.UNKNOWN
     assert 'Usage' in cmd.args 
+
+def test_parse_workflow(handler):
+    cmd = handler.parse('/workflow Build hello world', [])
+    assert cmd is not None
+    assert cmd.command_type == CommandType.WORKFLOW
+    assert cmd.args == 'Build hello world'
+
+def test_execute_workflow(monkeypatch):
+    handler = CommandHandler(file_tool=FileManagerTool())
+    # stub WorkflowTool
+    from src.tools import registry as reg
+    class StubWorkflow:
+        def execute(self, ti):
+            return ToolOutput(success=True, message="## Plan\nA\n\n## Code\nB\n\n## Review\nC")
+    monkeypatch.setattr(reg.ToolRegistry, 'get', lambda key: StubWorkflow() if key=='workflow.pcr' else None)
+    cmd = handler.parse('/workflow Test task', [])
+    resp = handler.execute_command(cmd, chat_session=None, current_user_input='/workflow Test task')
+    assert '## Plan' in resp and '## Code' in resp and '## Review' in resp 
