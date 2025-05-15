@@ -391,9 +391,6 @@ def _render_input_form(
 
 # --- Main Application ---
 def main_gui():
-    st.set_page_config(
-        page_title="Chat with Agent System", page_icon="💬", layout="centered"
-    )
     logger.info("Streamlit GUI application started/reloaded.")
 
     # Initialize chat session in session_state if not already present
