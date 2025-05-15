@@ -60,3 +60,7 @@ This will open a local browser app. The GUI displays the conversation and provid
 - A **Clear Chat** button to reset the conversation.
 
 The web UI maintains multi-turn context. You can observe both model responses side by side when using dual-model mode. The interface labels each response with the agent name for clarity. Ensure your API keys are set before running, so the models can respond.
+
+## Contributing
+
+Please read the [CONTRIBUTING.md](CONTRIBUTING.md) guide for a quick development loop, GitHub CLI workflow, and pre-commit setup.

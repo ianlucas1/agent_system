@@ -1,0 +1,25 @@
+repos:
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.4.3
+    hooks:
+      - id: ruff
+        args: ["check", "--fix"]
+  - repo: https://github.com/PyCQA/bandit
+    rev: 1.7.7
+    hooks:
+      - id: bandit
+        args: ["-q", "-r", "src"]
+  - repo: local
+    hooks:
+      - id: pytest
+        name: pytest quick
+        entry: pytest -q
+        language: system
+        pass_filenames: false
+  - repo: local
+    hooks:
+      - id: git-status-clean
+        name: ensure-no-untracked-files
+        entry: bash -c '[[ -z $(git ls-files --others --exclude-standard) ]] || (echo "⚠️  Untracked files present. Run \"git add -A\"." && exit 1)'
+        language: system
+        pass_filenames: false 
