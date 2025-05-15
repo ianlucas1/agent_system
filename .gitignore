@@ -19,6 +19,7 @@ inbox/
 
 # Coverage artifacts
 .coverage
+.coverage.*
 htmlcov/
 coverage.xml
 
