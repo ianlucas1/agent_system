@@ -135,7 +135,13 @@ for num, title, branch, substeps, commit_msg, artifact_files in tasks:
     out_lines.append(f"- git checkout -b {branch}")
 
     contains_precommit = False
-    # Match steps to artifact files and rewrite
+    artifact_read_step = ""
+    if artifact_files:
+         artifact_filenames_list = ", ".join([f"`{f[0]}`" for f in artifact_files])
+         artifact_read_step = f"- Read the content of the following artifact file(s) listed under \"Inputs required\": {artifact_filenames_list}"
+         out_lines.append(artifact_read_step)
+
+    # Match steps to artifact files and rewrite, skipping the original code block
     rewritten_substeps = []
     artifact_idx = 0
     for step in substeps:
@@ -143,22 +149,27 @@ for num, title, branch, substeps, commit_msg, artifact_files in tasks:
         if "pre-commit" in cleaned:
             contains_precommit = True
 
-        # Simple heuristic: if a step contains a code block (now replaced by artifact file), reference the artifact.
-        # This assumes code blocks in roadmap and their references in steps are in order.
-        if CODE_BLOCK_RE.search(step) and artifact_idx < len(artifact_files):
-             artifact_filename, _ = artifact_files[artifact_idx]
-             # Rephrase the step to use the artifact file
-             # This is a simple replacement; could be more sophisticated if needed.
-             if "scaffold" in artifact_filename:
-                 rewritten_substeps.append(f"Create file `{artifact_filename.replace('agent_workspace/task_', 'src/').replace('_step_1_scaffold', '')}` with the content of `{artifact_filename}`")
-             elif "patch" in artifact_filename:
-                 rewritten_substeps.append(f"Save the content of `{artifact_filename}` to a temp file (e.g. `patch.tmp`) and apply it: `git apply patch.tmp`") # Reinsert git apply
-
-             else:
-                 rewritten_substeps.append(f"Use the content of `{artifact_filename}` to perform the action described in the roadmap step: {cleaned}")
-             artifact_idx += 1
-        else:
+        # Ensure we only process steps with code blocks and have corresponding artifact files
+        code_block_match_in_step = CODE_BLOCK_RE.search(step)
+        if code_block_match_in_step and artifact_idx < len(artifact_files):
+            artifact_filename, _ = artifact_files[artifact_idx]
+            # Rephrase the step to use the artifact file
+            if "scaffold" in artifact_filename:
+                # Modify the target filename for scaffold creation
+                target_filepath = artifact_filename.replace('agent_workspace/task_', 'src/').replace(f'_step_{artifact_idx+1}_scaffold', '')
+                rewritten_substeps.append(f"Create file `{target_filepath}` with the content of `{artifact_filename}`.")
+            elif "patch" in artifact_filename:
+                # Include the git apply command
+                rewritten_substeps.append(f"Save the content of `{artifact_filename}` to a temp file named `patch.tmp` and apply it: `git apply patch.tmp`.")
+            else:
+                 # Generic step using artifact content
+                 # Avoid including the original code block text in the rewritten step
+                 step_text_before_code = step[:code_block_match_in_step.start()].strip()
+                 rewritten_substeps.append(f"{step_text_before_code}. Use the content of `{artifact_filename}`.")
+            artifact_idx += 1
+        elif not code_block_match_in_step: # Keep steps without code blocks as they are (after cleaning)
             rewritten_substeps.append(f"{cleaned}")
+        # If a step *had* a code block but no corresponding artifact file (shouldn't happen if parsing is correct), it's skipped.
 
     for step in rewritten_substeps:
         out_lines.append(f"- {step}")
