@@ -39,7 +39,12 @@ for m in TASK_HDR_RE.finditer(roadmap_text):
 
     # Commit message (best-effort)
     commit_match = COMMIT_RE.search(section)
-    commit_msg = commit_match.group(1) if commit_match else "<commit message from roadmap>"
+    if commit_match:
+        commit_msg = commit_match.group(1)
+    else:
+        # Fallback sensible default
+        safe_title = re.sub(r"[^A-Za-z0-9\- ]", "", title).strip().replace(" ", "-")
+        commit_msg = f"task-{num}: {safe_title.lower()}"
 
     tasks.append((num, title, branch, subtasks, commit_msg))
 
@@ -99,13 +104,22 @@ for num, title, branch, substeps, commit_msg in tasks:
 
     # Steps
     out_lines.append("### Steps to perform\n")
+    out_lines.append(f"- git checkout -b {branch}")
+
+    contains_precommit = False
     if substeps:
         for step in substeps:
-            # Ensure each substep starts with a dash and a space
             cleaned = step.replace("**", "").strip()
+            if "pre-commit" in cleaned:
+                contains_precommit = True
             out_lines.append(f"- {cleaned}")
     else:
         out_lines.append("- Follow the sub-steps in the roadmap section.")
+
+    # Append safety guard for pre-commit if needed
+    if contains_precommit:
+        out_lines.append("- If `pre-commit` is not available, run `pip install pre-commit && pre-commit install` then retry the previous step.")
+
     out_lines.append("")
 
     # Checklist
