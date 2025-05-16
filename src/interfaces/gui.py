@@ -8,6 +8,7 @@ from src.core.chat_session import ChatSession
 import os
 import shared.history as history # Added for persistent history loading and clearing
 import shared.usage_logger as UL
+import shared.cost_monitor  # Import cost monitor module
 
 # import tiktoken # No longer needed here directly
 # import google.generativeai as genai # No longer needed here directly
@@ -40,6 +41,9 @@ if "chat_session" not in st.session_state:
 st.session_state.setdefault("messages", history.load())
 
 chat_session = st.session_state.chat_session
+
+# Start cost polling thread on app startup
+shared.cost_monitor.start_polling()
 
 # --- Helper Functions for UI Rendering ---
 
@@ -272,6 +276,15 @@ def _render_token_counts_sidebar():
     st.sidebar.markdown(f"&nbsp;&nbsp;Gemini: {all_time_gemini}")
     st.sidebar.markdown(f"&nbsp;&nbsp;Total: {all_time_openai + all_time_gemini}")
     st.sidebar.markdown("---")
+
+    # --- Cost Monitor Panel ---
+    import pathlib
+    import json
+    cost_path = pathlib.Path("agent_workspace/cost_cache.json")
+    if cost_path.exists():
+        data = json.loads(cost_path.read_text())
+        st.sidebar.markdown(f"💵 OpenAI last 24h: ${data.get('openai_24h', 'N/A'):.2f}")
+        st.sidebar.markdown(f"💵 Gemini est.: ${data.get('gemini_est', 'N/A'):.2f}")
 
 
 def _render_clear_chat_button() -> bool:
