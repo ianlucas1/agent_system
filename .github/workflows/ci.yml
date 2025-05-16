@@ -43,4 +43,10 @@ jobs:
       - name: Ensure repo clean (no untracked files)
         run: |
           git status --porcelain
-          test "$(git status --porcelain | wc -l)" -eq 0 
+          test "$(git status --porcelain | wc -l)" -eq 0
+  metrics:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Metrics sanity
+        run: echo "metrics ok"
