@@ -424,6 +424,15 @@ def main_gui():
         st.markdown(f"**OpenAI:** {totals['openai']:,} tok")
         st.markdown(f"**Gemini:** {totals['gemini']:,} tok")
     # --- End Task 5 addition ---
+
+    # --- Task 8: Prometheus Metrics Link ---
+    from shared.metrics import MetricsManager
+    mm = MetricsManager()
+    if mm.enabled:
+        metrics_url = f"http://localhost:{mm._bound_port}/metrics"
+        st.sidebar.markdown(f"[📊 Prometheus]({metrics_url})")
+    # --- End Task 8 addition ---
+
     _render_api_status_sidebar(chat_session_instance)
     _render_token_counts_sidebar()  # This will call _update_and_display_token_counts inside
 
