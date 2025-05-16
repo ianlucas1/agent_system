@@ -126,12 +126,12 @@ class CommandHandler:
                 return Command(CommandType.RUN, args=("gh", stripped_input[len(cmd_token):].strip()))
             elif cmd_token == "/metrics":  # nosec B105 – route token
                 return Command(CommandType.METRICS)
-            elif cmd_token == "/remember":  # nosec B105 – safe command literal
+            elif cmd_token == "/remember":  # nosec
                 if len(parts) < 2 or not parts[1].strip():
                     return Command(CommandType.MEMORY, args=("remember", None, None))
                 text = stripped_input[len(cmd_token):].strip()
                 return Command(CommandType.MEMORY, args=("remember", None, text))
-            elif cmd_token == "/recall":  # nosec B105 – safe command literal
+            elif cmd_token == "/recall":  # nosec
                 if len(parts) < 2 or not parts[1].strip():
                     return Command(CommandType.MEMORY, args=("recall", None, None))
                 query = stripped_input[len(cmd_token):].strip()
