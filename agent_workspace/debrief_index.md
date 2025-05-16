@@ -2,4 +2,5 @@
 - [Task 2 Debrief](debrief_task_2.md)
 - [Task 3](debrief_task_3.md)
 - [Task 4 Debrief](agent_workspace/debrief_task_4.md)
-- [Debrief for Task 5](debrief_task_5.md) 
+- [Debrief for Task 5](debrief_task_5.md)
+- [Debrief for Task 6](debrief_task_6.md) 

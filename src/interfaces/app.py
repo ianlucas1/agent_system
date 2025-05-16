@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
 
 # Page configuration
 st.set_page_config(
-    page_title="Chat with Agent System", page_icon="💬", layout="centered"
+    page_title="AI Chat Interface", page_icon="��", layout="wide"
 )
 
 # Initialize chat session in session_state if not already
@@ -445,6 +445,32 @@ def main_gui():
             chat_session_instance
         )  # Explicit call after processing
         st.rerun()
+
+    # Add copy-to-clipboard JS for code blocks
+    st.markdown(
+        """
+        <script>
+        function addCopyButtons() {
+            document.querySelectorAll('pre code').forEach(function(codeBlock) {
+                if (codeBlock.parentElement.querySelector('.copy-btn')) return;
+                var button = document.createElement('button');
+                button.className = 'copy-btn';
+                button.textContent = 'Copy';
+                button.style = 'float: right; margin: 4px; padding: 2px 8px; font-size: 0.8em;';
+                button.onclick = function() {
+                    navigator.clipboard.writeText(codeBlock.innerText);
+                    button.textContent = 'Copied!';
+                    setTimeout(function() { button.textContent = 'Copy'; }, 1200);
+                };
+                codeBlock.parentElement.insertBefore(button, codeBlock);
+            });
+        }
+        setTimeout(addCopyButtons, 500);
+        document.addEventListener('DOMNodeInserted', addCopyButtons);
+        </script>
+        """,
+        unsafe_allow_html=True,
+    )
 
 
 if __name__ == "__main__":
