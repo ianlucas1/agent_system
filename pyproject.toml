@@ -15,5 +15,4 @@ where = ["."]
 include = ["src", "src.*"]
 
 [tool.ruff]
-# Exclude auto-generated task scaffolds and log outputs.
-extend-exclude = ["agent_workspace/**"] 
+# Exclude auto-generated task scaffolds and log outputs. 

@@ -77,7 +77,7 @@ def _loop() -> None:
         time.sleep(FLUSH_SEC)
         try:
             UsageLogger._flush()
-        except Exception:
+        except Exception:  # nosec B110 - Intentionally swallowing exceptions to prevent background thread from crashing application.
             # Never let the background thread kill the process – swallow errors
             pass
 

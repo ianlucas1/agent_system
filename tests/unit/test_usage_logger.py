@@ -1,6 +1,5 @@
 import json
 
-import pytest
 
 from src.shared import usage_logger as UL
 
