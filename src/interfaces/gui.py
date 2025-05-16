@@ -6,6 +6,7 @@ Provides a UI for chatting with OpenAI and Gemini models, and using file system 
 import streamlit as st
 from src.core.chat_session import ChatSession
 import os
+import shared.history as history # Added for persistent history loading and clearing
 
 # import tiktoken # No longer needed here directly
 # import google.generativeai as genai # No longer needed here directly
@@ -33,6 +34,9 @@ if "chat_session" not in st.session_state:
     st.session_state.current_conversation_gemini_tokens = 0
     st.session_state.all_time_total_openai_tokens = 0
     st.session_state.all_time_total_gemini_tokens = 0
+
+# Load persistent history on app startup
+st.session_state.setdefault("messages", history.load())
 
 chat_session = st.session_state.chat_session
 
@@ -270,24 +274,11 @@ def _render_token_counts_sidebar():
 
 
 def _render_clear_chat_button() -> bool:
-    """Renders the clear chat button and handles its logic. Returns True if chat was cleared."""
-    if st.sidebar.button("Clear Chat"):
-        logger.info(
-            "Clear Chat button clicked. Resetting chat session and token counts."
-        )
-        st.session_state.all_time_total_openai_tokens += (
-            st.session_state.current_conversation_openai_tokens
-        )
-        st.session_state.all_time_total_gemini_tokens += (
-            st.session_state.current_conversation_gemini_tokens
-        )
-
-        st.session_state.chat_session = ChatSession()
-        st.session_state.last_user_input_token_count = 0
-        st.session_state.current_user_message_tokens_log = []
-        st.session_state.current_conversation_openai_tokens = 0
-        st.session_state.current_conversation_gemini_tokens = 0
-        # Model selection in session_state ("selected_model_name") is retained
+    """Renders the Clear Chat button in the sidebar."""
+    if st.sidebar.button("🗑 Clear Chat"):
+        history.reset()
+        st.session_state["messages"] = []
+        st.rerun()
         return True
     return False
 

@@ -20,7 +20,7 @@ from src.handlers.command import CommandHandler, Command  # Updated import
 from src.llm.clients import OpenAIClientManager, GeminiClientManager  # Updated import
 from src.tools.file_system import FileManagerTool  # Updated import
 from src.tools.base import ToolInput  # Updated import
-from src.llm import collaboration as a2a_collab  # Added for A2A collaboration
+import shared.history as history  # Added for persistent history
 
 logger = logging.getLogger(__name__)  # Added
 
@@ -190,7 +190,7 @@ class ChatSession:
         self,
         user_input: str,
         model_choice: str = "openai",
-        specific_model_name: str = None,
+        specific_model_name: Optional[str] = None,
         use_a2a: bool = False,
     ):
         """
@@ -226,12 +226,10 @@ class ChatSession:
         self.history.add_message(
             role="user", content=processed_user_input, sender_provider="user"
         )
+        history.append("user", processed_user_input) # Append user message to persistent history
 
         # Check and handle file system commands using the new CommandHandler
         output_messages = []
-        sender_for_commands = (
-            model_choice  # "openai" or "gemini" - for attributing command output
-        )
 
         parsed_command: Optional[Command] = self.command_handler.parse(
             processed_user_input, self.history.get_chat_log()
@@ -249,108 +247,70 @@ class ChatSession:
                 logger.info(
                     f"Command response generated: '{command_response_text[:100]}...' "
                 )  # Added log
-                self.history.add_message(
-                    role="assistant",
-                    content=command_response_text,
-                    sender_provider=sender_for_commands,
-                )
-                output_messages.append((sender_for_commands, command_response_text))
+                # Command output is treated as an assistant message
+                output_messages.append((model_choice, command_response_text))
 
-            # If command_response_text is None (e.g. an internal command that doesn't message user, though not current case)
-            # or if the command was fully handled and might have produced no textual output for the chat directly.
-            # We always return output_messages. If it's empty, no message is sent back for this turn from command.
-            return output_messages
-
-        # --- A2A Collaboration Handling ---
-        if (
-            model_choice == "both" or model_choice == "collab"
-        ):  # "both" from CLI, "collab" from GUI
-            logger.info(
-                f"Attempting A2A collaboration for input: '{processed_user_input[:50]}...'"
-            )
-            if self.openai_manager.available and self.gemini_manager.available:
-                # Ensure client objects are not None before passing
-                if self.openai_manager.client and self.gemini_manager.client:
-                    collab_answer = a2a_collab.run(
-                        user_message=processed_user_input,
-                        openai_client=self.openai_manager.client,
-                        gemini_client=self.gemini_manager.client,
-                    )
+        # If no command was parsed, get model response
+        if not parsed_command:
+            if model_choice == "openai":
+                if not self.openai_manager.available:
+                    error_msg = "⚠️ OpenAI model is not available."
+                    logger.warning("OpenAI model unavailable for user message processing.")
                     self.history.add_message(
-                        role="assistant",
-                        content=collab_answer,
-                        sender_provider="collab",
+                        role="assistant", content=error_msg, sender_provider="openai"
                     )
-                    output_messages.append(("collab", collab_answer))
-                    logger.info(
-                        f"A2A collaboration successful. Response: '{collab_answer[:100]}...'"
-                    )
-                else:
-                    error_msg = "⚠️ A2A Collaboration failed: one or both LLM clients are not properly initialized internally."
-                    logger.error(error_msg)
+                    output_messages.append(("openai", error_msg))
+                    return output_messages
+
+                logger.debug(
+                    f"Sending request to OpenAI model: {self.openai_manager.get_model_name()}"
+                )
+                answer = self.openai_manager.generate_response(
+                    self.history.get_openai_format()
+                )
+                logger.debug(f"Received answer from OpenAI: '{answer[:100]}...' ")
+                self.history.add_message(
+                    role="assistant", content=answer, sender_provider="openai"
+                )
+                output_messages.append(("openai", answer))
+
+            elif model_choice == "gemini":
+                if not self.gemini_manager.available:
+                    error_msg = "⚠️ Gemini model is not available."
+                    logger.warning("Gemini model unavailable for user message processing.")
                     self.history.add_message(
-                        role="assistant", content=error_msg, sender_provider="system"
-                    )  # Or "collab_error"
-                    output_messages.append(("system", error_msg))
-            else:
-                error_msg = "⚠️ A2A Collaboration requires both OpenAI and Gemini models to be available and configured."
-                logger.warning(error_msg)
-                self.history.add_message(
-                    role="assistant", content=error_msg, sender_provider="system"
-                )  # Or "collab_error"
-                output_messages.append(("system", error_msg))
-            return output_messages
-        # --- End A2A Collaboration Handling ---
+                        role="assistant", content=error_msg, sender_provider="gemini"
+                    )
+                    output_messages.append(("gemini", error_msg))
+                    return output_messages
 
-        # Not a command: handle with selected model provider (OpenAI or Gemini single)
-        # User message already added to self.history at the top of this method.
-        # Old code added user message to chat_log here - removed.
-
-        if model_choice == "openai":
-            # Old code added user message to self.openai_history here - removed.
-            if not self.openai_manager.available:
-                error_msg = "⚠️ OpenAI model is not available."
-                logger.warning("OpenAI model unavailable for user message processing.")
-                self.history.add_message(
-                    role="assistant", content=error_msg, sender_provider="openai"
+                logger.debug(
+                    f"Sending request to Gemini model: {self.gemini_manager.get_model_name()}"
                 )
-                output_messages.append(("openai", error_msg))
-                return output_messages
-
-            logger.debug(
-                f"Sending request to OpenAI model: {self.openai_manager.get_model_name()}"
-            )
-            answer = self.openai_manager.generate_response(
-                self.history.get_openai_format()
-            )
-            logger.debug(f"Received answer from OpenAI: '{answer[:100]}...' ")
-            self.history.add_message(
-                role="assistant", content=answer, sender_provider="openai"
-            )
-            output_messages.append(("openai", answer))
-
-        elif model_choice == "gemini":
-            # Old code added user message to self.gemini_history here - removed.
-            if not self.gemini_manager.available:
-                error_msg = "⚠️ Gemini model is not available."
-                logger.warning("Gemini model unavailable for user message processing.")
-                self.history.add_message(
-                    role="assistant", content=error_msg, sender_provider="gemini"
+                answer = self.gemini_manager.generate_response(
+                    self.history.get_gemini_format()
                 )
-                output_messages.append(("gemini", error_msg))
-                return output_messages
+                logger.debug(f"Received answer from Gemini: '{answer[:100]}...' ")
+                self.history.add_message(
+                    role="assistant", content=answer, sender_provider="gemini"
+                )
+                output_messages.append(("gemini", answer))
 
-            logger.debug(
-                f"Sending request to Gemini model: {self.gemini_manager.get_model_name()}"
-            )
-            answer = self.gemini_manager.generate_response(
-                self.history.get_gemini_format()
-            )
-            logger.debug(f"Received answer from Gemini: '{answer[:100]}...' ")
-            self.history.add_message(
-                role="assistant", content=answer, sender_provider="gemini"
-            )
-            output_messages.append(("gemini", answer))
+        # Add model responses to conversation history and collect for display
+        for sender, content in output_messages:
+            # Determine the role based on sender for history storage (typically 'assistant' for LLMs)
+            role = "assistant"
+            # Use sender_provider to store the actual source ('openai', 'gemini', 'collab')
+            sender_provider = sender # Use sender directly as it indicates openai/gemini/collab
+
+            self.history.add_message(role=role, content=content, sender_provider=sender_provider)
+            history.append(sender_provider, content) # Append agent message to persistent history
+
+        # Check if the last message was a file write command response that requires confirmation
+        if parsed_command and parsed_command.command_type == "write" and not parsed_command.args.get("overwrite", False):
+            # Assuming args contains 'path' and 'content' for write commands
+            self.pending_write_user_path = parsed_command.args.get("path")
+            self.pending_write_content = parsed_command.args.get("content")
 
         return output_messages
 
