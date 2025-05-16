@@ -1,0 +1,3 @@
+- [Task 1 Debrief](debrief_task_1.md)
+- [Task 2 Debrief](debrief_task_2.md)
+- [Task 3](debrief_task_3.md) 
