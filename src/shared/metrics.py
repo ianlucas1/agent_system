@@ -44,6 +44,18 @@ class MetricsManager:
                 self.qa_pass_total = Counter('qa_pass_total', 'Total number of QA gate passes', registry=self._registry)
                 self.qa_fail_total = Counter('qa_fail_total', 'Total number of QA gate failures', registry=self._registry)
 
+                # Token accounting counters (incremented by UsageLogger)
+                self.openai_tokens_total = Counter(
+                    'openai_tokens_total',
+                    'Total number of OpenAI tokens consumed',
+                    registry=self._registry,
+                )
+                self.gemini_tokens_total = Counter(
+                    'gemini_tokens_total',
+                    'Total number of Gemini tokens consumed',
+                    registry=self._registry,
+                )
+
                 # Start the HTTP server synchronously so tests can assert on calls immediately
                 port = 9090
                 while port < 9095:
@@ -67,6 +79,8 @@ class MetricsManager:
                 self.cli_calls_total = DummyCounter()
                 self.qa_pass_total = DummyCounter()
                 self.qa_fail_total = DummyCounter()
+                self.openai_tokens_total = DummyCounter()
+                self.gemini_tokens_total = DummyCounter()
 
             self._initialized = True
 

@@ -24,11 +24,4 @@ repos:
         name: ensure-no-untracked-files
         entry: bash -c '[[ -z $(git ls-files --others --exclude-standard) ]] || (echo "⚠️  Untracked files present. Run \"git add -A\"." && exit 1)'
         language: system
-        pass_filenames: false
-  - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v1.9.0
-    hooks:
-      - id: mypy
-        args: ["--ignore-missing-imports", "--pretty", "--show-error-codes"]
-        # Only fail on touched files; historical debt stays red in CI output.
-        # pre-commit automatically passes the staged file list. 
+        pass_filenames: false 

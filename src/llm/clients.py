@@ -28,6 +28,9 @@ except ImportError:
 # Get a logger for this module
 logger = logging.getLogger(__name__)
 
+# Token accounting
+from src.shared.usage_logger import UsageLogger
+
 
 class OpenAIClientManager:
     def __init__(self, api_key: Optional[str], default_model_name: str = "o3"):
@@ -75,6 +78,36 @@ class OpenAIClientManager:
             response = self.client.chat.completions.create(
                 model=self.model_name, messages=history
             )
+            # -------------------------------------------------------------
+            # Token accounting: leverage the OpenAI response.usage field if
+            # available; otherwise fall back to estimating via tiktoken.
+            # -------------------------------------------------------------
+            tokens_used = 0
+            try:
+                if hasattr(response, "usage") and response.usage is not None:
+                    # Newer OpenAI SDK exposes prompt_tokens/completion_tokens/total_tokens
+                    usage_obj = response.usage  # type: ignore[attr-defined]
+                    if hasattr(usage_obj, "total_tokens") and usage_obj.total_tokens:
+                        tokens_used = usage_obj.total_tokens  # type: ignore[attr-defined]
+                    elif (
+                        hasattr(usage_obj, "prompt_tokens")
+                        and hasattr(usage_obj, "completion_tokens")
+                    ):
+                        tokens_used = (
+                            (usage_obj.prompt_tokens or 0)
+                            + (usage_obj.completion_tokens or 0)
+                        )
+                else:
+                    # Fallback: estimate using token counter helper
+                    prompt_text = "\n".join(m.get("content", "") for m in history)
+                    tokens_used = self.count_tokens(prompt_text)
+                    tokens_used += self.count_tokens(response.choices[0].message.content)
+            except Exception as e_tok:
+                logger.debug(f"Unable to determine token usage: {e_tok}")
+                tokens_used = 0
+
+            if tokens_used:
+                UsageLogger.inc("openai", tokens_used)
             return response.choices[0].message.content
         except Exception as e:
             logger.error(f"Error communicating with OpenAI: {e}", exc_info=True)
@@ -249,6 +282,27 @@ class GeminiClientManager:
             response = self.client.generate_content(full_prompt)
             # Ensure response.text is the correct way to access content.
             # Original code used response.text
+            # -------------------------------------------------------------
+            # Token accounting (Gemini) – use SDK-provided count if possible
+            # else estimate via word/token count helper.
+            # -------------------------------------------------------------
+            try:
+                tokens_used = 0
+                if hasattr(response, "usage_metadata") and getattr(
+                    response, "usage_metadata", None
+                ) is not None:
+                    usage_md = response.usage_metadata
+                    if hasattr(usage_md, "total_tokens") and usage_md.total_tokens:
+                        tokens_used = usage_md.total_tokens  # type: ignore[attr-defined]
+                if tokens_used == 0:
+                    # Estimate: prompt + response tokens
+                    tokens_used = self.count_tokens(full_prompt)
+                    tokens_used += self.count_tokens(response.text)
+                if tokens_used:
+                    UsageLogger.inc("gemini", tokens_used)
+            except Exception as e_tok:
+                logger.debug(f"Unable to determine Gemini token usage: {e_tok}")
+
             return response.text
         except Exception as e:
             logger.error(f"Error communicating with Gemini: {e}", exc_info=True)
