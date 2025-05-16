@@ -7,6 +7,7 @@ import streamlit as st
 from src.core.chat_session import ChatSession
 import os
 import shared.history as history # Added for persistent history loading and clearing
+import shared.usage_logger as UL
 
 # import tiktoken # No longer needed here directly
 # import google.generativeai as genai # No longer needed here directly
@@ -404,6 +405,12 @@ def main_gui():
     selected_model, active_provider = _render_model_selection_sidebar(
         chat_session_instance
     )
+    # --- Task 5: Token & Cost Stats Expander ---
+    with st.sidebar.expander("Token & Cost Stats", expanded=True):
+        totals = UL.UsageLogger.get_totals()
+        st.markdown(f"**OpenAI:** {totals['openai']:,} tok")
+        st.markdown(f"**Gemini:** {totals['gemini']:,} tok")
+    # --- End Task 5 addition ---
     _render_api_status_sidebar(chat_session_instance)
     _render_token_counts_sidebar()  # This will call _update_and_display_token_counts inside
 
