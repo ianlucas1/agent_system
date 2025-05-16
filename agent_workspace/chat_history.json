@@ -1,0 +1,42 @@
+[
+{
+"r": "user",
+"c": "/write tmp_tests/foo.txt abc"
+},
+{
+"r": "user",
+"c": "hello"
+},
+{
+"r": "user",
+"c": "/write tmp_tests/foo.txt abc"
+},
+{
+"r": "openai",
+"c": "\u26a0\ufe0f File `foo.txt` already exists. Please confirm overwrite or use a different filename."
+},
+{
+"r": "user",
+"c": "hello"
+},
+{
+"r": "user",
+"c": "/write tmp_tests/foo.txt abc"
+},
+{
+"r": "openai",
+"c": "\u26a0\ufe0f File `foo.txt` already exists. Please confirm overwrite or use a different filename."
+},
+{
+"r": "user",
+"c": "/overwrite foo.txt"
+},
+{
+"r": "openai",
+"c": "\u2705 Saved"
+},
+{
+"r": "user",
+"c": "hello"
+}
+]
