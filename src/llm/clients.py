@@ -30,7 +30,7 @@ logger = logging.getLogger(__name__)
 
 
 class OpenAIClientManager:
-    def __init__(self, api_key: Optional[str], default_model_name: str = "gpt-4o-mini"):
+    def __init__(self, api_key: Optional[str], default_model_name: str = "o3"):
         self.client: Optional[OpenAI] = None
         self.model_name: str = default_model_name
         self._available: bool = False

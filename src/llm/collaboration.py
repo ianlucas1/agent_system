@@ -39,7 +39,7 @@ def run(user_message: str, openai_client: Any, gemini_client: Any) -> str:
     try:
         logger.debug("A2A Round 1: OpenAI generating initial answer.")
         response = openai_client.chat.completions.create(
-            model="gpt-4o-mini",  # Consider making this configurable
+            model="gpt-4.1",  # Consider making this configurable
             messages=[{"role": "user", "content": question}],
         )
         openai_answer = response.choices[0].message.content
@@ -77,7 +77,7 @@ def run(user_message: str, openai_client: Any, gemini_client: Any) -> str:
             },
         ]
         final_response = openai_client.chat.completions.create(
-            model="gpt-4o-mini",  # Consider making this configurable
+            model="gpt-4.1",  # Consider making this configurable
             messages=refine_messages,
         )
         final_answer = final_response.choices[0].message.content
