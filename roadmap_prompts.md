@@ -96,10 +96,12 @@ You are a **Cursor IDE chat agent**. Your sole mission is to execute this task a
 ### Steps to perform
 
 - git checkout -b ci/metrics-job
-- 2.1 Save the provided ci\_patch.diff to a temp file (e.g. `patch.tmp`) and apply it:
+- Read the content of the following artifact file(s) listed under "Inputs required": `agent_workspace/task_2_step_1_block1.sh`
+- 2.1 Save the provided ci_patch.diff to a temp file (e.g. `patch.tmp`) and apply it:
 - 2.2 Verify the GitHub Actions workflow was updated: `grep -n "metrics:" .github/workflows/ci.yml` should show the new metrics job added.
 - 2.3 Run a local CI test (using `act`): `act -j metrics` and expect exit code 0 within \~60s.
 - 2.4 `git add .github/workflows/ci.yml && git commit -m "ci: add metrics sanity job"`
+- If the `act` CLI is not available, install it (e.g., `brew install act` or download the binary from https://github.com/nektos/act) and then retry the previous step.
 
 ### Do-Not-Stop-Until checklist
 
@@ -169,6 +171,7 @@ You are a **Cursor IDE chat agent**. Your sole mission is to execute this task a
 ### Steps to perform
 
 - git checkout -b feature/usage-logger
+- Read the content of the following artifact file(s) listed under "Inputs required": `agent_workspace/task_3_step_1_scaffold.py`, `agent_workspace/task_3_step_2_block2.py`, `agent_workspace/task_3_step_3_block3.py`
 - 3.1 Create file `src/shared/usage_logger.py` with the following scaffold:
 - 3.2 In `src/llm/openai_client.py` and `src/llm/gemini_client.py`, import the logger and increment counts after each API call. For example:
 - 3.3 If `ENABLE_METRICS=1`: inside `UsageLogger.inc()`, also increment Prometheus counters. For example:
@@ -243,6 +246,7 @@ You are a **Cursor IDE chat agent**. Your sole mission is to execute this task a
 ### Steps to perform
 
 - git checkout -b feature/persistent-history
+- Read the content of the following artifact file(s) listed under "Inputs required": `agent_workspace/task_4_step_1_scaffold.py`, `agent_workspace/task_4_step_2_scaffold.py`, `agent_workspace/task_4_step_3_block3.py`
 - 4.1 Create `src/shared/history.py` with basic persistent history API:
 - 4.2 Modify `ChatSession.send()` logic: after each user or agent message is processed, call `history.append(role, content)` to save it (use `"user"` or `"openai"/"gemini"` as role).
 - 4.3 On app startup in `src/interfaces/gui.py`, pre-load past messages into session state:
@@ -316,6 +320,7 @@ You are a **Cursor IDE chat agent**. Your sole mission is to execute this task a
 ### Steps to perform
 
 - git checkout -b ui/token-dashboard
+- Read the content of the following artifact file(s) listed under "Inputs required": `agent_workspace/task_5_step_1_block1.py`
 - 5.1 Extend the Streamlit sidebar to show token usage stats. For example, insert under the model selector:
 - 5.2 Enable auto-refresh of this panel (every \~5 seconds). E.g., use `st.experimental_rerun()` or `st.sidebar.empty().add_static()` trick to periodically refresh.
 - 5.3 `git add -u && git commit -m "ui: add live token usage sidebar"`
@@ -387,6 +392,7 @@ You are a **Cursor IDE chat agent**. Your sole mission is to execute this task a
 ### Steps to perform
 
 - git checkout -b feature/cost-monitor
+- Read the content of the following artifact file(s) listed under "Inputs required": `agent_workspace/task_6_step_1_scaffold.py`, `agent_workspace/task_6_step_2_block2.py`
 - 6.1 Create `src/shared/cost_monitor.py` to periodically fetch API billing info:
 - 6.2 Import `shared.cost_monitor` at app startup (just importing will start the background polling thread).
 - 6.3 In the sidebar, display the cost info if available. For example:
@@ -459,6 +465,7 @@ You are a **Cursor IDE chat agent**. Your sole mission is to execute this task a
 ### Steps to perform
 
 - git checkout -b ui/dark-redesign
+- Read the content of the following artifact file(s) listed under "Inputs required": `agent_workspace/task_7_step_1_block1.toml`
 - 7.1 Create a Streamlit config file to enforce dark mode. In .streamlit/config.toml:
 - 7.2 *(Optional)* Rename `src/interfaces/gui.py` to `src/interfaces/app.py` for clarity. If renamed, update any entry points (e.g., in pyproject.toml `[project.scripts]` for the CLI/GUI command).
 - 7.3 Refactor the GUI code for the new layout:
@@ -531,6 +538,7 @@ You are a **Cursor IDE chat agent**. Your sole mission is to execute this task a
 ### Steps to perform
 
 - git checkout -b metrics/gui-hook
+- Read the content of the following artifact file(s) listed under "Inputs required": `agent_workspace/task_8_step_1_block1.py`
 - 8.1 If Prometheus metrics are enabled (`ENABLE_METRICS=1`), add a quick link in the sidebar to the metrics endpoint. For example:
 - 8.2 `git add -u && git commit -m "feat: add Prometheus /metrics link in GUI"`
 
@@ -600,6 +608,7 @@ You are a **Cursor IDE chat agent**. Your sole mission is to execute this task a
 ### Steps to perform
 
 - git checkout -b docs/refresh
+- Read the content of the following artifact file(s) listed under "Inputs required": `agent_workspace/task_9_step_1_block1.sh`
 - 9.2 Update docs/index.md (MkDocs home) to match the new branding and features described in the README.
 - 9.3 Run `mkdocs build --strict` to ensure documentation builds without warnings or errors.
 - 9.4 `git add -A && git commit -m "docs: overhaul README and index for new scope"`
@@ -1037,7 +1046,7 @@ You are a **Cursor IDE chat agent**. Your sole mission is to execute this task a
 
 - git checkout -b coord/schema-keys
 - 16.1 Create `src/coordination/schema.py` defining structured artifact classes: `Plan`, `CodePatch`, `TestReport`, `Review`. Implement each as a dataclass or simple class with fields capturing the essential data (e.g., Plan might include a list of steps; CodePatch contains file diffs; TestReport has status and log; Review has final verdict and comments). Include `to_json()`/`from_json()` methods for serialization.
-- 16.2 Extend the ContextBus to support new coordination keys. In `src/shared/context_bus.py`, add enum entries or constants for each artifact (e.g., `plan_draft`, `code_patch`, `test_report`, `final_review`). This ensures a canonical place in the shared state for each step’s output.
+- 16.2 Extend the ContextBus to support new coordination keys. In `src/shared/context_bus.py`, add enum entries or constants for each artifact (e.g., `plan_draft`, `code_patch`, `test_report`, `final_review`). This ensures a canonical place in the shared state for each step's output.
 - 16.3 Create tests/unit/test\_schema.py to verify the new schema classes. For each class, construct an instance, round-trip it via `to_json()`/`from_json()`, and assert the result matches the original.
 - 16.4 Run `pytest -q tests/unit/test_schema.py` and confirm all tests pass.
 - 16.5 `git add -A && git commit -m "feat: coordination schema & ContextBus keys"`
@@ -1597,9 +1606,8 @@ You are a **Cursor IDE chat agent**. Your sole mission is to execute this task a
 - git checkout -b coord/security-sanitization
 - 24.1 Implement a sanitization utility to scrub potentially malicious content from agent outputs before they are reused. For example, create `coordination/util.py` with a function `sanitize_json(text: str) -> str` that removes known prompt injection patterns (e.g., any occurrence of `"Ignore previous instructions"` or similar phrases) from the given text.
 - 24.2 Apply this sanitization step at each hand-off point in the Coordinator:
-- 24.3 Add unit tests for `sanitize_json`. Include cases like a string containing `"<|Ignore previous instructions|>"` (or other prompt injection samples) and ensure the function strips or neutralizes them. Also verify it doesn’t alter innocent content.
-- 24.4 Run `pytest -q tests/unit/test_sanitization.py` to validate the sanitization logic works as intended.
-- 24.5 `git add -u && git commit -m "sec: sanitize inter-agent JSON artifacts for safety"`
+- 24.3 Add unit tests for `sanitize_json`. Include cases like a string containing `"<|Ignore previous instructions|>"` (or other prompt injection samples) and ensure the function strips or neutralizes them. Also verify it doesn't alter innocent content.
+- 24.4 Run `
 
 ### Do-Not-Stop-Until checklist
 
@@ -1615,7 +1623,7 @@ You are a **Cursor IDE chat agent**. Your sole mission is to execute this task a
 
 ```bash
 git add -A
-git commit -m "sec: sanitize inter-agent JSON artifacts for safety"
+git commit -m "task-24: security-sanitization"
 git push --set-upstream origin coord/security-sanitization
 gh pr create --base main --head coord/security-sanitization --draft --fill
 gh pr ready <PR_NUMBER>
@@ -1648,151 +1656,6 @@ Save the same debrief block to `agent_workspace/debrief_task_24.md` and append a
 
 When **everything** above is complete, reply only with:
 ```success: Task 24 complete```
-
----
-
-## Task 25: Deprecate Legacy Coordination Mode (branch `coord/retire-legacy`)
-
-You are a **Cursor IDE chat agent**. Your sole mission is to execute this task and **not stop** until the entire checklist is satisfied.
-
-### Inputs required
-
-- Section `### 25` of `consolidated_development_roadmap.md`.
-
-- Any existing project files referenced below. If a required file is missing, ask the user to attach it before proceeding.
-
-
-### Steps to perform
-
-- git checkout -b coord/retire-legacy
-- 25.1 Remove references to the old multi-agent orchestration to avoid confusion now that SOP coordination is in place. This includes retiring the `WorkflowTool` in `src/tools/workflow.py` and any legacy agent collaboration logic.
-- 25.2 Eliminate the temporary toggle introduced in Task 21: the new SOP pipeline becomes the default behavior for `/workflow`. (In other words, `/workflow <task>` should now always invoke the Coordinator, and the checkbox or config controlling it can be removed.)
-- 25.3 Search the codebase for any conditional branches or flags related to "legacy" or "A2A" mode. Delete or refactor those sections so that only the new Planner→Coder→QualityGate→Reviewer path exists moving forward.
-- 25.4 Update or remove outdated tests tied to the old workflow. For example, if there were unit tests for `WorkflowTool`, consider removing them or replacing them with tests for the new Coordinator. Ensure all test files now pass with only the new coordination logic present.
-- 25.5 Run a full quality check: `pre-commit run --all-files` and `pytest -q`. All linters and tests should remain green with the legacy code gone.
-- 25.6 `git add -A && git commit -m "chore: remove legacy A2A workflow implementation"`
-- If `pre-commit` is not available, run `pip install pre-commit && pre-commit install` then retry the previous step.
-
-### Do-Not-Stop-Until checklist
-
-- All code / docs edits are applied.
-
-- Quality gates pass: `ruff`, `pytest -q`, etc.
-
-- GitHub workflow executed (see snippet below).
-
-- Debrief block posted in this chat using the template.
-
-### GitHub CLI workflow (copy/paste)
-
-```bash
-git add -A
-git commit -m "chore: remove legacy A2A workflow implementation"
-git push --set-upstream origin coord/retire-legacy
-gh pr create --base main --head coord/retire-legacy --draft --fill
-gh pr ready <PR_NUMBER>
-gh pr checks <PR_NUMBER> --watch
-printf "y\n" | gh pr merge <PR_NUMBER> --merge --delete-branch
-git checkout main
-git pull --ff-only origin main
-git branch -d coord/retire-legacy
-```
-### Debrief template
-
-```markdown
-## Debrief for Task 25
-
-- Task Completed: Task 25: Deprecate Legacy Coordination Mode (branch `coord/retire-legacy`)
-- Summary of Changes: <fill>
-- Key Files Modified/Created: <fill>
-- Commit SHA: <fill>
-- PR Link: <fill>
-- Tag (if applicable): <fill>
-- Current Git Status: <fill>
-- Next Task Information: <fill>
-- Potential Issues or Notes for Next Agent: <fill>
-```
-### Persistence actions
-
-After you paste the debrief above, also **append** `Task 25` to `agent_workspace/roadmap_progress.txt` (create the file if it does not exist).
-
-Save the same debrief block to `agent_workspace/debrief_task_25.md` and append a link (or the block itself) to `agent_workspace/debrief_index.md` so future agents have a chronological ledger.
-
-When **everything** above is complete, reply only with:
-```success: Task 25 complete```
-
----
-
-## Task 26: Documentation & Release (branch `docs/coordination-v2`)
-
-You are a **Cursor IDE chat agent**. Your sole mission is to execute this task and **not stop** until the entire checklist is satisfied.
-
-### Inputs required
-
-- Section `### 26` of `consolidated_development_roadmap.md`.
-
-- Any existing project files referenced below. If a required file is missing, ask the user to attach it before proceeding.
-
-- The following artifact file(s) are provided in `agent_workspace/`:
-  - `agent_workspace/task_26_step_1_block1.sh`
-
-### Steps to perform
-
-- git checkout -b docs/coordination-v2
-- 26.1 Update README.md to document the new capabilities:
-- 26.2 Update contributor guides and policies:
-- 26.3 Bump the version in project metadata (e.g., `__version__` or pyproject.toml) to 0.3.0 to mark this major update.
-- 26.4 Perform a final integration test of the entire system on a clean environment (simulate as if an agent or a developer is using it from scratch). This includes verifying that `agent_workspace` setup, all new slash commands, and the `/workflow` pipeline function as documented.
-- 26.5 Tag the new release:
-- 26.6 `git add -A && git commit -m "docs: update README, CONTRIBUTING, and quality policy for v0.3.0 release"` (ensure all documentation changes are committed).
-
-### Do-Not-Stop-Until checklist
-
-- All code / docs edits are applied.
-
-- Quality gates pass: `ruff`, `pytest -q`, etc.
-
-- GitHub workflow executed (see snippet below).
-
-- Debrief block posted in this chat using the template.
-
-### GitHub CLI workflow (copy/paste)
-
-```bash
-git add -A
-git commit -m "docs: update README, CONTRIBUTING, and quality policy for v0.3.0 release"
-git push --set-upstream origin docs/coordination-v2
-gh pr create --base main --head docs/coordination-v2 --draft --fill
-gh pr ready <PR_NUMBER>
-gh pr checks <PR_NUMBER> --watch
-printf "y\n" | gh pr merge <PR_NUMBER> --merge --delete-branch
-git checkout main
-git pull --ff-only origin main
-git branch -d docs/coordination-v2
-```
-### Debrief template
-
-```markdown
-## Debrief for Task 26
-
-- Task Completed: Task 26: Documentation & Release (branch `docs/coordination-v2`)
-- Summary of Changes: <fill>
-- Key Files Modified/Created: <fill>
-- Commit SHA: <fill>
-- PR Link: <fill>
-- Tag (if applicable): <fill>
-- Current Git Status: <fill>
-- Next Task Information: <fill>
-- Potential Issues or Notes for Next Agent: <fill>
-```
-### Persistence actions
-
-After you paste the debrief above, also **append** `Task 26` to `agent_workspace/roadmap_progress.txt` (create the file if it does not exist).
-
-Save the same debrief block to `agent_workspace/debrief_task_26.md` and append a link (or the block itself) to `agent_workspace/debrief_index.md` so future agents have a chronological ledger.
-
-When **everything** above is complete, reply only with:
-```success: Task 26 complete```
 
 ---
 

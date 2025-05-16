@@ -135,6 +135,7 @@ for num, title, branch, substeps, commit_msg, artifact_files in tasks:
     out_lines.append(f"- git checkout -b {branch}")
 
     contains_precommit = False
+    contains_act = False
     artifact_read_step = ""
     if artifact_files:
          artifact_filenames_list = ", ".join([f"`{f[0]}`" for f in artifact_files])
@@ -148,6 +149,8 @@ for num, title, branch, substeps, commit_msg, artifact_files in tasks:
         cleaned = step.replace("**", "").strip()
         if "pre-commit" in cleaned:
             contains_precommit = True
+        if "act -j" in cleaned or " act " in cleaned:
+            contains_act = True
 
         # Ensure we only process steps with code blocks and have corresponding artifact files
         code_block_match_in_step = CODE_BLOCK_RE.search(step)
@@ -177,6 +180,9 @@ for num, title, branch, substeps, commit_msg, artifact_files in tasks:
     # Append safety guard for pre-commit if needed
     if contains_precommit:
         out_lines.append("- If `pre-commit` is not available, run `pip install pre-commit && pre-commit install` then retry the previous step.")
+
+    if contains_act:
+        out_lines.append("- If the `act` CLI is not available, install it (e.g., `brew install act` or download the binary from https://github.com/nektos/act) and then retry the previous step.")
 
     out_lines.append("")
 
