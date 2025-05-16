@@ -6,4 +6,5 @@ streamlit
 tiktoken
 filelock
 ruff
-prometheus_client 
+prometheus_client
+chromadb 

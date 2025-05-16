@@ -126,6 +126,16 @@ class CommandHandler:
                 return Command(CommandType.RUN, args=("gh", stripped_input[len(cmd_token):].strip()))
             elif cmd_token == "/metrics":  # nosec B105 – route token
                 return Command(CommandType.METRICS)
+            elif cmd_token == "/remember":
+                if len(parts) < 2 or not parts[1].strip():
+                    return Command(CommandType.MEMORY, args=("remember", None, None))
+                text = stripped_input[len(cmd_token):].strip()
+                return Command(CommandType.MEMORY, args=("remember", None, text))
+            elif cmd_token == "/recall":
+                if len(parts) < 2 or not parts[1].strip():
+                    return Command(CommandType.MEMORY, args=("recall", None, None))
+                query = stripped_input[len(cmd_token):].strip()
+                return Command(CommandType.MEMORY, args=("recall", None, query))
             else:
                 return Command(
                     CommandType.UNKNOWN, args=f"Unknown command: {cmd_token}"
@@ -376,13 +386,22 @@ class CommandHandler:
             elif parsed_command.command_type == CommandType.MEMORY:
                 op, key, value = parsed_command.args
                 from src.tools.registry import ToolRegistry
-                mem_tool = ToolRegistry.get("memory")
-                if mem_tool is None:
+                memory_tool = ToolRegistry.get("memory")
+                if op == "remember":
+                    tool_input = ToolInput(operation_name="remember", args={"text": value})
+                    tool_output = memory_tool.execute(tool_input)
+                    return tool_output.message
+                elif op == "recall":
+                    tool_input = ToolInput(operation_name="recall", args={"query": value})
+                    tool_output = memory_tool.execute(tool_input)
+                    return tool_output.message
+                # fallback to legacy memory ops if needed
+                if memory_tool is None:
                     from src.tools.memory import MemoryTool
-                    mem_tool = MemoryTool()
+                    memory_tool = MemoryTool()
                 logger.info("/mem invoked: %s %s", op, key)
                 tool_input = ToolInput(operation_name=op, args={"key": key, "value": value})
-                tool_output = mem_tool.execute(tool_input)
+                tool_output = memory_tool.execute(tool_input)
 
             elif parsed_command.command_type == CommandType.METRICS: # Added /metrics command handling
                 metrics_snapshot = MetricsManager().get_snapshot()
