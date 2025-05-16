@@ -7,15 +7,11 @@
 ### 1  Purge Legacy Crypto Artifacts  → branch `cleanup/eth-vestiges`
 
 * **1.1** `git rm -r reports exec_requests`
-* **1.2** `grep -RIl --exclude-dir=.git -e "Ethereum" -e "ETHERSCAN" -e "Alchemy" . | xargs sed -i'' -e '/Ethereum/d'`
 * **1.3** Edit **pyproject.toml**: replace
-  `description = "Autonomous Ethereum valuation agent"`
   → `description = "Multi-Agent Chat GUI"`.
-* **1.4** Edit **.env.example**: remove any lines containing `ETHERSCAN_API_KEY` or `ALCHEMY_API_KEY`.
 * **1.5** Update **README.md** top title to `"Multi-Agent Chatbot GUI"` and eliminate any remaining crypto-specific wording.
 * **1.6** `pre-commit run --all-files` to lint all modified files.
 * **1.7** `pytest -q` to ensure tests still pass.
-* **1.8** `git add -u && git commit -m "chore: remove legacy Ethereum artifacts"`
 
 ### 2  Patch CI Workflow  → branch `ci/metrics-job`
 
@@ -221,7 +217,6 @@
 
 ### 9  README & Docs Refresh  → branch `docs/refresh`
 
-* **9.1** Replace the root **README.md** content with the updated project overview (from the prepared `readme_overhaul.md`), reflecting the new focus as a multi-agent chat GUI (persistent history, token/cost tracking, etc. and no Ethereum references).
 * **9.2** Update **docs/index.md** (MkDocs home) to match the new branding and features described in the README.
 * **9.3** Run `mkdocs build --strict` to ensure documentation builds without warnings or errors.
 * **9.4** `git add -A && git commit -m "docs: overhaul README and index for new scope"`

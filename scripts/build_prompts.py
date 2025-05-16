@@ -23,10 +23,11 @@ roadmap_text = roadmap_path.read_text(encoding="utf-8")
 TASK_HDR_RE = re.compile(r"^###\s*(\d+)\s+(.+?)\s+→\s+branch\s+`([^`]+)`", re.MULTILINE)
 SUBTASK_RE = re.compile(r"^\*\s+\*\*(\d+\.\d+)\*\*\s+(.*)$", re.MULTILINE)
 COMMIT_RE = re.compile(r"git commit -m\s+\"([^\"]+)\"")
+CODE_BLOCK_RE = re.compile(r"^\s*```(\w+)?\n(.*?)\n^\s*```", re.MULTILINE | re.DOTALL)
 
 # --- 3. Extract tasks ---------------------------------------------------------
 
-tasks = []  # list[(num, title, branch, subtasks:str list, commit_msg:str)]
+tasks = []  # list[(num, title, branch, subtasks:str list, commit_msg:str, artifact_files: list[(filename, content)])]
 for m in TASK_HDR_RE.finditer(roadmap_text):
     num, title, branch = m.group(1), m.group(2).strip(), m.group(3).strip()
     start = m.end()
@@ -39,9 +40,31 @@ for m in TASK_HDR_RE.finditer(roadmap_text):
 
     # Commit message (best-effort)
     commit_match = COMMIT_RE.search(section)
-    commit_msg = commit_match.group(1) if commit_match else "<commit message from roadmap>"
+    if commit_match:
+        commit_msg = commit_match.group(1)
+    else:
+        # If no explicit commit message, try to find one in the steps
+        step_commit_match = COMMIT_RE.search("\n".join(subtasks))
+        if step_commit_match:
+             commit_msg = step_commit_match.group(1)
+        else:
+            # Fallback sensible default
+            safe_title = re.sub(r"[^A-Za-z0-9\- ]", "", title).strip().replace(" ", "-")
+            commit_msg = f"task-{num}: {safe_title.lower()}"
 
-    tasks.append((num, title, branch, subtasks, commit_msg))
+    # Check for code blocks in the section and create artifact files
+    artifact_files = []
+    code_blocks = list(CODE_BLOCK_RE.finditer(section))
+    for i, block_match in enumerate(code_blocks):
+        lang = block_match.group(1) or "txt"
+        content = block_match.group(2).strip()
+        # Simple heuristic for file extension/hint
+        hint = "patch" if "diff" in content.lower() else ("scaffold" if "class" in content or "def" in content else f"block{i+1}")
+        ext = {"python": "py", "bash": "sh", "toml": "toml"}.get(lang.lower(), lang.lower())
+        artifact_filename = f"agent_workspace/task_{num}_step_{i+1}_{hint}.{ext}"
+        artifact_files.append((artifact_filename, content))
+
+    tasks.append((num, title, branch, subtasks, commit_msg, artifact_files))
 
 # --- 4. Templates -------------------------------------------------------------
 HEADER = """<!--
@@ -86,7 +109,9 @@ DEBRIEF_TMPL = """```markdown
 # --- 5. Render ----------------------------------------------------------------
 
 out_lines = [HEADER]
-for num, title, branch, substeps, commit_msg in tasks:
+all_artifact_files = []
+
+for num, title, branch, substeps, commit_msg, artifact_files in tasks:
     out_lines.append(f"## Task {num}: {title} (branch `{branch}`)\n")
     out_lines.append(
         "You are a **Cursor IDE chat agent**. Your sole mission is to execute this task and **not stop** until the entire checklist is satisfied.\n"
@@ -97,15 +122,68 @@ for num, title, branch, substeps, commit_msg in tasks:
     out_lines.append(f"- Section `### {num}` of `consolidated_development_roadmap.md`.\n")
     out_lines.append("- Any existing project files referenced below. If a required file is missing, ask the user to attach it before proceeding.\n")
 
+    # List artifact files created by the generator for this task
+    if artifact_files:
+        out_lines.append("- The following artifact file(s) are provided in `agent_workspace/`:")
+        for filename, _ in artifact_files:
+            out_lines.append(f"  - `{filename}`")
+        all_artifact_files.extend(artifact_files)
+    out_lines.append("")
+
     # Steps
     out_lines.append("### Steps to perform\n")
-    if substeps:
-        for step in substeps:
-            # Ensure each substep starts with a dash and a space
-            cleaned = step.replace("**", "").strip()
-            out_lines.append(f"- {cleaned}")
-    else:
-        out_lines.append("- Follow the sub-steps in the roadmap section.")
+    out_lines.append(f"- git checkout -b {branch}")
+
+    contains_precommit = False
+    contains_act = False
+    artifact_read_step = ""
+    if artifact_files:
+         artifact_filenames_list = ", ".join([f"`{f[0]}`" for f in artifact_files])
+         artifact_read_step = f"- Read the content of the following artifact file(s) listed under \"Inputs required\": {artifact_filenames_list}"
+         out_lines.append(artifact_read_step)
+
+    # Match steps to artifact files and rewrite, skipping the original code block
+    rewritten_substeps = []
+    artifact_idx = 0
+    for step in substeps:
+        cleaned = step.replace("**", "").strip()
+        if "pre-commit" in cleaned:
+            contains_precommit = True
+        if "act -j" in cleaned or " act " in cleaned:
+            contains_act = True
+
+        # Ensure we only process steps with code blocks and have corresponding artifact files
+        code_block_match_in_step = CODE_BLOCK_RE.search(step)
+        if code_block_match_in_step and artifact_idx < len(artifact_files):
+            artifact_filename, _ = artifact_files[artifact_idx]
+            # Rephrase the step to use the artifact file
+            if "scaffold" in artifact_filename:
+                # Modify the target filename for scaffold creation
+                target_filepath = artifact_filename.replace('agent_workspace/task_', 'src/').replace(f'_step_{artifact_idx+1}_scaffold', '')
+                rewritten_substeps.append(f"Create file `{target_filepath}` with the content of `{artifact_filename}`.")
+            elif "patch" in artifact_filename:
+                # Include the git apply command
+                rewritten_substeps.append(f"Save the content of `{artifact_filename}` to a temp file named `patch.tmp` and apply it: `git apply patch.tmp`.")
+            else:
+                 # Generic step using artifact content
+                 # Avoid including the original code block text in the rewritten step
+                 step_text_before_code = step[:code_block_match_in_step.start()].strip()
+                 rewritten_substeps.append(f"{step_text_before_code}. Use the content of `{artifact_filename}`.")
+            artifact_idx += 1
+        elif not code_block_match_in_step: # Keep steps without code blocks as they are (after cleaning)
+            rewritten_substeps.append(f"{cleaned}")
+        # If a step *had* a code block but no corresponding artifact file (shouldn't happen if parsing is correct), it's skipped.
+
+    for step in rewritten_substeps:
+        out_lines.append(f"- {step}")
+
+    # Append safety guard for pre-commit if needed
+    if contains_precommit:
+        out_lines.append("- If `pre-commit` is not available, run `pip install pre-commit && pre-commit install` then retry the previous step.")
+
+    if contains_act:
+        out_lines.append("- If the `act` CLI is not available, install it (e.g., `brew install act` or download the binary from https://github.com/nektos/act) and then retry the previous step.")
+
     out_lines.append("")
 
     # Checklist
@@ -137,5 +215,10 @@ for num, title, branch, substeps, commit_msg in tasks:
         + num
         + " complete```\n\n---\n"
     )
+
+# Write all artifact files
+for filename, content in all_artifact_files:
+    Path(filename).parent.mkdir(exist_ok=True)
+    Path(filename).write_text(content, encoding="utf-8")
 
 print("\n".join(out_lines)) 

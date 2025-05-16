@@ -19,16 +19,16 @@ You are a **Cursor IDE chat agent**. Your sole mission is to execute this task a
 
 - Any existing project files referenced below. If a required file is missing, ask the user to attach it before proceeding.
 
+
 ### Steps to perform
 
+- git checkout -b cleanup/eth-vestiges
 - 1.1 `git rm -r reports exec_requests`
-- 1.2 `grep -RIl --exclude-dir=.git -e "Ethereum" -e "ETHERSCAN" -e "Alchemy" . | xargs sed -i'' -e '/Ethereum/d'`
 - 1.3 Edit pyproject.toml: replace
-- 1.4 Edit .env.example: remove any lines containing `ETHERSCAN_API_KEY` or `ALCHEMY_API_KEY`.
 - 1.5 Update README.md top title to `"Multi-Agent Chatbot GUI"` and eliminate any remaining crypto-specific wording.
 - 1.6 `pre-commit run --all-files` to lint all modified files.
 - 1.7 `pytest -q` to ensure tests still pass.
-- 1.8 `git add -u && git commit -m "chore: remove legacy Ethereum artifacts"`
+- If `pre-commit` is not available, run `pip install pre-commit && pre-commit install` then retry the previous step.
 
 ### Do-Not-Stop-Until checklist
 
@@ -44,7 +44,7 @@ You are a **Cursor IDE chat agent**. Your sole mission is to execute this task a
 
 ```bash
 git add -A
-git commit -m "chore: remove legacy Ethereum artifacts"
+git commit -m "task-1: purge-legacy-crypto-artifacts"
 git push --set-upstream origin cleanup/eth-vestiges
 gh pr create --base main --head cleanup/eth-vestiges --draft --fill
 gh pr ready <PR_NUMBER>
@@ -90,12 +90,18 @@ You are a **Cursor IDE chat agent**. Your sole mission is to execute this task a
 
 - Any existing project files referenced below. If a required file is missing, ask the user to attach it before proceeding.
 
+- The following artifact file(s) are provided in `agent_workspace/`:
+  - `agent_workspace/task_2_step_1_block1.sh`
+
 ### Steps to perform
 
-- 2.1 Save the provided ci\_patch.diff to a temp file (e.g. `patch.tmp`) and apply it:
+- git checkout -b ci/metrics-job
+- Read the content of the following artifact file(s) listed under "Inputs required": `agent_workspace/task_2_step_1_block1.sh`
+- 2.1 Save the provided ci_patch.diff to a temp file (e.g. `patch.tmp`) and apply it:
 - 2.2 Verify the GitHub Actions workflow was updated: `grep -n "metrics:" .github/workflows/ci.yml` should show the new metrics job added.
 - 2.3 Run a local CI test (using `act`): `act -j metrics` and expect exit code 0 within \~60s.
 - 2.4 `git add .github/workflows/ci.yml && git commit -m "ci: add metrics sanity job"`
+- If the `act` CLI is not available, install it (e.g., `brew install act` or download the binary from https://github.com/nektos/act) and then retry the previous step.
 
 ### Do-Not-Stop-Until checklist
 
@@ -157,8 +163,15 @@ You are a **Cursor IDE chat agent**. Your sole mission is to execute this task a
 
 - Any existing project files referenced below. If a required file is missing, ask the user to attach it before proceeding.
 
+- The following artifact file(s) are provided in `agent_workspace/`:
+  - `agent_workspace/task_3_step_1_scaffold.py`
+  - `agent_workspace/task_3_step_2_block2.py`
+  - `agent_workspace/task_3_step_3_block3.py`
+
 ### Steps to perform
 
+- git checkout -b feature/usage-logger
+- Read the content of the following artifact file(s) listed under "Inputs required": `agent_workspace/task_3_step_1_scaffold.py`, `agent_workspace/task_3_step_2_block2.py`, `agent_workspace/task_3_step_3_block3.py`
 - 3.1 Create file `src/shared/usage_logger.py` with the following scaffold:
 - 3.2 In `src/llm/openai_client.py` and `src/llm/gemini_client.py`, import the logger and increment counts after each API call. For example:
 - 3.3 If `ENABLE_METRICS=1`: inside `UsageLogger.inc()`, also increment Prometheus counters. For example:
@@ -225,8 +238,15 @@ You are a **Cursor IDE chat agent**. Your sole mission is to execute this task a
 
 - Any existing project files referenced below. If a required file is missing, ask the user to attach it before proceeding.
 
+- The following artifact file(s) are provided in `agent_workspace/`:
+  - `agent_workspace/task_4_step_1_scaffold.py`
+  - `agent_workspace/task_4_step_2_scaffold.py`
+  - `agent_workspace/task_4_step_3_block3.py`
+
 ### Steps to perform
 
+- git checkout -b feature/persistent-history
+- Read the content of the following artifact file(s) listed under "Inputs required": `agent_workspace/task_4_step_1_scaffold.py`, `agent_workspace/task_4_step_2_scaffold.py`, `agent_workspace/task_4_step_3_block3.py`
 - 4.1 Create `src/shared/history.py` with basic persistent history API:
 - 4.2 Modify `ChatSession.send()` logic: after each user or agent message is processed, call `history.append(role, content)` to save it (use `"user"` or `"openai"/"gemini"` as role).
 - 4.3 On app startup in `src/interfaces/gui.py`, pre-load past messages into session state:
@@ -294,8 +314,13 @@ You are a **Cursor IDE chat agent**. Your sole mission is to execute this task a
 
 - Any existing project files referenced below. If a required file is missing, ask the user to attach it before proceeding.
 
+- The following artifact file(s) are provided in `agent_workspace/`:
+  - `agent_workspace/task_5_step_1_block1.py`
+
 ### Steps to perform
 
+- git checkout -b ui/token-dashboard
+- Read the content of the following artifact file(s) listed under "Inputs required": `agent_workspace/task_5_step_1_block1.py`
 - 5.1 Extend the Streamlit sidebar to show token usage stats. For example, insert under the model selector:
 - 5.2 Enable auto-refresh of this panel (every \~5 seconds). E.g., use `st.experimental_rerun()` or `st.sidebar.empty().add_static()` trick to periodically refresh.
 - 5.3 `git add -u && git commit -m "ui: add live token usage sidebar"`
@@ -360,8 +385,14 @@ You are a **Cursor IDE chat agent**. Your sole mission is to execute this task a
 
 - Any existing project files referenced below. If a required file is missing, ask the user to attach it before proceeding.
 
+- The following artifact file(s) are provided in `agent_workspace/`:
+  - `agent_workspace/task_6_step_1_scaffold.py`
+  - `agent_workspace/task_6_step_2_block2.py`
+
 ### Steps to perform
 
+- git checkout -b feature/cost-monitor
+- Read the content of the following artifact file(s) listed under "Inputs required": `agent_workspace/task_6_step_1_scaffold.py`, `agent_workspace/task_6_step_2_block2.py`
 - 6.1 Create `src/shared/cost_monitor.py` to periodically fetch API billing info:
 - 6.2 Import `shared.cost_monitor` at app startup (just importing will start the background polling thread).
 - 6.3 In the sidebar, display the cost info if available. For example:
@@ -428,8 +459,13 @@ You are a **Cursor IDE chat agent**. Your sole mission is to execute this task a
 
 - Any existing project files referenced below. If a required file is missing, ask the user to attach it before proceeding.
 
+- The following artifact file(s) are provided in `agent_workspace/`:
+  - `agent_workspace/task_7_step_1_block1.toml`
+
 ### Steps to perform
 
+- git checkout -b ui/dark-redesign
+- Read the content of the following artifact file(s) listed under "Inputs required": `agent_workspace/task_7_step_1_block1.toml`
 - 7.1 Create a Streamlit config file to enforce dark mode. In .streamlit/config.toml:
 - 7.2 *(Optional)* Rename `src/interfaces/gui.py` to `src/interfaces/app.py` for clarity. If renamed, update any entry points (e.g., in pyproject.toml `[project.scripts]` for the CLI/GUI command).
 - 7.3 Refactor the GUI code for the new layout:
@@ -496,8 +532,13 @@ You are a **Cursor IDE chat agent**. Your sole mission is to execute this task a
 
 - Any existing project files referenced below. If a required file is missing, ask the user to attach it before proceeding.
 
+- The following artifact file(s) are provided in `agent_workspace/`:
+  - `agent_workspace/task_8_step_1_block1.py`
+
 ### Steps to perform
 
+- git checkout -b metrics/gui-hook
+- Read the content of the following artifact file(s) listed under "Inputs required": `agent_workspace/task_8_step_1_block1.py`
 - 8.1 If Prometheus metrics are enabled (`ENABLE_METRICS=1`), add a quick link in the sidebar to the metrics endpoint. For example:
 - 8.2 `git add -u && git commit -m "feat: add Prometheus /metrics link in GUI"`
 
@@ -561,9 +602,13 @@ You are a **Cursor IDE chat agent**. Your sole mission is to execute this task a
 
 - Any existing project files referenced below. If a required file is missing, ask the user to attach it before proceeding.
 
+- The following artifact file(s) are provided in `agent_workspace/`:
+  - `agent_workspace/task_9_step_1_block1.sh`
+
 ### Steps to perform
 
-- 9.1 Replace the root README.md content with the updated project overview (from the prepared `readme_overhaul.md`), reflecting the new focus as a multi-agent chat GUI (persistent history, token/cost tracking, etc. and no Ethereum references).
+- git checkout -b docs/refresh
+- Read the content of the following artifact file(s) listed under "Inputs required": `agent_workspace/task_9_step_1_block1.sh`
 - 9.2 Update docs/index.md (MkDocs home) to match the new branding and features described in the README.
 - 9.3 Run `mkdocs build --strict` to ensure documentation builds without warnings or errors.
 - 9.4 `git add -A && git commit -m "docs: overhaul README and index for new scope"`
@@ -571,6 +616,7 @@ You are a **Cursor IDE chat agent**. Your sole mission is to execute this task a
 - 10.2 `pytest -q` and confirm the coverage report is ≥ 55% (the minimum coverage gate).
 - 10.3 Perform a manual smoke test of the app:
 - 10.4 Tag the release:
+- If `pre-commit` is not available, run `pip install pre-commit && pre-commit install` then retry the previous step.
 
 ### Do-Not-Stop-Until checklist
 
@@ -632,14 +678,17 @@ You are a **Cursor IDE chat agent**. Your sole mission is to execute this task a
 
 - Any existing project files referenced below. If a required file is missing, ask the user to attach it before proceeding.
 
+
 ### Steps to perform
 
+- git checkout -b feature/memory-chroma
 - 11.1 Append `chromadb` to `requirements.txt` and install it (`pip install chromadb`).
 - 11.2 Create `src/tools/memory.py` implementing a memory tool using Chroma. Initialize a local Chroma client and collection (e.g. `agent_memory`) at module import.
 - 11.3 Implement new memory commands: `/remember <text>` to embed and store the given text in the vector DB, and `/recall <query>` to perform a similarity search and return relevant stored content. Register these in the ToolRegistry (so the agent can call them via `ToolRegistry.get("memory").execute(...)`).
 - 11.4 Add unit tests for memory persistence: e.g., use `/remember` to add a sample fact, then call `/recall` with a related query and assert that the fact is retrieved. (Use a small embedding model or stub for determinism in tests.)
 - 11.5 Run `pre-commit run --all-files` and then `pytest -q` to ensure lint and tests pass (update tests if needed to keep coverage ≥ 55%).
 - 11.6 `git add -A && git commit -m "feat: long-term memory via Chroma vector DB"`
+- If `pre-commit` is not available, run `pip install pre-commit && pre-commit install` then retry the previous step.
 
 ### Do-Not-Stop-Until checklist
 
@@ -701,14 +750,17 @@ You are a **Cursor IDE chat agent**. Your sole mission is to execute this task a
 
 - Any existing project files referenced below. If a required file is missing, ask the user to attach it before proceeding.
 
+
 ### Steps to perform
 
+- git checkout -b feature/browser-tool
 - 12.1 Append `playwright` to `requirements.txt` and install it. Then run `playwright install` to download browser engines for headless operation.
 - 12.2 Create `src/tools/browser.py` containing a `BrowserTool` class. Use `playwright.sync_playwright()` (in setup) to launch a headless browser context (Chromium). Implement a method like `open_url(url: str) -> str` that navigates to the URL and returns the page text (you can use `page.content()` or similar).
 - 12.3 Register a new slash command `/browse <URL>` that instantiates `BrowserTool` (or uses a singleton instance) and returns the fetched page content or a summary of it. Include basic error handling for navigation timeouts or invalid URLs.
 - 12.4 Write a basic test for the browser tool (mark it with `@pytest.mark.slow` if it uses actual browsing): e.g., use a local HTML file or a lightweight public page and assert that `/browse <file_or_url>` returns a snippet of expected text.
 - 12.5 Run all linters and tests (`pre-commit` and `pytest`) to ensure nothing regresses.
 - 12.6 `git add -A && git commit -m "feat: web browsing capability via Playwright"`
+- If `pre-commit` is not available, run `pip install pre-commit && pre-commit install` then retry the previous step.
 
 ### Do-Not-Stop-Until checklist
 
@@ -770,8 +822,10 @@ You are a **Cursor IDE chat agent**. Your sole mission is to execute this task a
 
 - Any existing project files referenced below. If a required file is missing, ask the user to attach it before proceeding.
 
+
 ### Steps to perform
 
+- git checkout -b feature/analytics-db
 - 13.1 Append `duckdb` to `requirements.txt` and install it (`pip install duckdb`).
 - 13.2 Create `src/tools/db_tool.py` with a `DatabaseTool` (DuckDB-backed). On initialization, open or create a DuckDB database file (e.g. `agent_workspace/analytics.duckdb`).
 - 13.3 Implement a method `run_query(sql: str) -> str` that executes the given SQL on the DuckDB connection and returns the results (e.g., as a CSV string or formatted table). Support read-only queries (you may allow CREATE/INSERT if needed to log data).
@@ -779,6 +833,7 @@ You are a **Cursor IDE chat agent**. Your sole mission is to execute this task a
 - 13.5 Add tests for the DB tool: for example, pre-load a small table, then use `/query` to select from it and verify the expected output. Also test that a malformed query returns an error string.
 - 13.6 Run `pre-commit` and `pytest -q` to ensure the new code is linted and tested.
 - 13.7 `git add -A && git commit -m "feat: embedded DuckDB for analytics queries"`
+- If `pre-commit` is not available, run `pip install pre-commit && pre-commit install` then retry the previous step.
 
 ### Do-Not-Stop-Until checklist
 
@@ -840,8 +895,10 @@ You are a **Cursor IDE chat agent**. Your sole mission is to execute this task a
 
 - Any existing project files referenced below. If a required file is missing, ask the user to attach it before proceeding.
 
+
 ### Steps to perform
 
+- git checkout -b feature/scheduler
 - 14.1 Append `apscheduler` to `requirements.txt` and install it.
 - 14.2 Create `src/tools/scheduler.py`. Initialize a `BackgroundScheduler` (e.g., `sched = BackgroundScheduler()` and `sched.start()`) when the app launches.
 - 14.3 Implement a function (or Tool method) `schedule_task(command: str, trigger: dict)` that uses `sched.add_job` to schedule execution of a given slash command or tool function at a later time or on an interval. For example, allow usage like `/schedule "every 5m" "/browse example.com"`.
@@ -849,6 +906,7 @@ You are a **Cursor IDE chat agent**. Your sole mission is to execute this task a
 - 14.5 Add a test (could be an integration test marked slow) that schedules a one-off job with a short delay (e.g., 2 seconds), then uses a callback or shared flag to verify the job ran. Use `monkeypatch` or a dummy tool to avoid real sleep delays in the test.
 - 14.6 Run `pre-commit` and `pytest -q` to ensure all quality gates pass (scheduler might spawn threads; ensure tests handle that deterministically or mark appropriately).
 - 14.7 `git add -A && git commit -m "feat: background task scheduling via APScheduler"`
+- If `pre-commit` is not available, run `pip install pre-commit && pre-commit install` then retry the previous step.
 
 ### Do-Not-Stop-Until checklist
 
@@ -910,8 +968,10 @@ You are a **Cursor IDE chat agent**. Your sole mission is to execute this task a
 
 - Any existing project files referenced below. If a required file is missing, ask the user to attach it before proceeding.
 
+
 ### Steps to perform
 
+- git checkout -b feature/gui-automation
 - 15.1 Append `pyautogui` to `requirements.txt` and install it (`pip install pyautogui`).
 - 15.2 Create `src/tools/rpa.py` implementing basic RPA (robotic process automation) tools. For example, define `type_text(text: str)` to simulate keyboard typing (`pyautogui.write(text)`) and `capture_screen(path: str)` to take a screenshot (`pyautogui.screenshot(path)`).
 - 15.3 Register slash commands for these actions, e.g.: `/type "<text>"` to type text into the active window, and `/screenshot <filename>` to save a screenshot. Include safeguards: PyAutoGUI should not run if no display is available (you can detect CI via env and no-op or raise a friendly error).
@@ -919,6 +979,7 @@ You are a **Cursor IDE chat agent**. Your sole mission is to execute this task a
 - 15.5 Add a test for RPA tooling using the dry-run mode or monkeypatch PyAutoGUI: verify that calling `/type "hello"` results in a log or state indicating the text "hello" would be typed, and that `/screenshot` attempts to write a file (you can simulate the file write).
 - 15.6 Run `pre-commit run --all-files` and `pytest -q` to ensure the RPA integration does not break any existing tests (mark RPA tests to skip in headless CI if needed).
 - 15.7 `git add -A && git commit -m "feat: OS automation via PyAutoGUI (RPA)"`
+- If `pre-commit` is not available, run `pip install pre-commit && pre-commit install` then retry the previous step.
 
 ### Do-Not-Stop-Until checklist
 
@@ -980,10 +1041,12 @@ You are a **Cursor IDE chat agent**. Your sole mission is to execute this task a
 
 - Any existing project files referenced below. If a required file is missing, ask the user to attach it before proceeding.
 
+
 ### Steps to perform
 
+- git checkout -b coord/schema-keys
 - 16.1 Create `src/coordination/schema.py` defining structured artifact classes: `Plan`, `CodePatch`, `TestReport`, `Review`. Implement each as a dataclass or simple class with fields capturing the essential data (e.g., Plan might include a list of steps; CodePatch contains file diffs; TestReport has status and log; Review has final verdict and comments). Include `to_json()`/`from_json()` methods for serialization.
-- 16.2 Extend the ContextBus to support new coordination keys. In `src/shared/context_bus.py`, add enum entries or constants for each artifact (e.g., `plan_draft`, `code_patch`, `test_report`, `final_review`). This ensures a canonical place in the shared state for each step’s output.
+- 16.2 Extend the ContextBus to support new coordination keys. In `src/shared/context_bus.py`, add enum entries or constants for each artifact (e.g., `plan_draft`, `code_patch`, `test_report`, `final_review`). This ensures a canonical place in the shared state for each step's output.
 - 16.3 Create tests/unit/test\_schema.py to verify the new schema classes. For each class, construct an instance, round-trip it via `to_json()`/`from_json()`, and assert the result matches the original.
 - 16.4 Run `pytest -q tests/unit/test_schema.py` and confirm all tests pass.
 - 16.5 `git add -A && git commit -m "feat: coordination schema & ContextBus keys"`
@@ -1048,8 +1111,10 @@ You are a **Cursor IDE chat agent**. Your sole mission is to execute this task a
 
 - Any existing project files referenced below. If a required file is missing, ask the user to attach it before proceeding.
 
+
 ### Steps to perform
 
+- git checkout -b coord/prompts
 - 17.1 Create directory `src/coordination/prompts/` and add role-specific prompt files: planner.txt, coder.txt, reviewer.txt.
 - 17.2 Ensure these prompt files are loaded by the agent system when spawning the respective agents (for example, modify the agent initialization or MultiAgentTool to fetch the content of these files as the `role_prompt`).
 - 17.3 (No direct code to test here, but) do a quick manual check that the files are readable and contain no syntax errors (the content will be indirectly validated when the agents produce the expected structured outputs).
@@ -1115,8 +1180,10 @@ You are a **Cursor IDE chat agent**. Your sole mission is to execute this task a
 
 - Any existing project files referenced below. If a required file is missing, ask the user to attach it before proceeding.
 
+
 ### Steps to perform
 
+- git checkout -b coord/orchestrator
 - 18.1 Create `src/coordination/orchestrator.py` with a new `Coordinator` class. Define an enum of states or steps (e.g., `CoordStage` with values PLANNING, CODING, TESTING, REVIEW).
 - 18.2 Implement `Coordinator.run(user_task: str) -> Review` to execute the SOP workflow deterministically:
 - 18.3 Register a new chat command for this pipeline. For now, use a separate trigger (e.g., `/workflow2 <task>`) in the ToolRegistry or command parser that will instantiate `Coordinator` and call `run(task)`. (This allows side-by-side testing with the legacy `/workflow` command initially.)
@@ -1184,8 +1251,10 @@ You are a **Cursor IDE chat agent**. Your sole mission is to execute this task a
 
 - Any existing project files referenced below. If a required file is missing, ask the user to attach it before proceeding.
 
+
 ### Steps to perform
 
+- git checkout -b coord/quality-gate
 - 19.1 Append `semgrep` to the development requirements (e.g., add to `requirements-dev.txt` and ensure it's installed in CI) to include static security scanning.
 - 19.2 Create `src/coordination/quality_gate.py` with a function `run_gate(work_dir: Path) -> dict`. This function will execute all quality checks within the given temporary workspace:
 - 19.3 Integrate this QualityGate into the Coordinator (Task 18): after applying the code patch in the CODING step, call `run_gate(temp_workspace)`. If the returned status is "FAIL", record the failure info and allow the Coordinator to invoke a fix (retry the Coder agent) if `max_retries` > 0 (to be implemented in Task 23).
@@ -1253,8 +1322,10 @@ You are a **Cursor IDE chat agent**. Your sole mission is to execute this task a
 
 - Any existing project files referenced below. If a required file is missing, ask the user to attach it before proceeding.
 
+
 ### Steps to perform
 
+- git checkout -b coord/metrics
 - 20.1 Extend MetricsManager (in `src/shared/metrics.py`) with new Prometheus counters for the coordination pipeline:
 - 20.2 In the Coordinator workflow (Task 18), hook into these metrics:
 - 20.3 Manually test metrics output (if possible): run the app with metrics enabled and execute a sample `/workflow2` task. Then visit the metrics endpoint (`/metrics`) and verify that the new counters (e.g., `coord_agent_calls_total`) are present and increasing.
@@ -1320,8 +1391,10 @@ You are a **Cursor IDE chat agent**. Your sole mission is to execute this task a
 
 - Any existing project files referenced below. If a required file is missing, ask the user to attach it before proceeding.
 
+
 ### Steps to perform
 
+- git checkout -b coord/gui-toggle
 - 21.1 Add a user-facing option in the GUI to switch on the new coordination pipeline. For example, in the sidebar settings, include a checkbox: "Use Coordinated Workflow (SOP mode)".
 - 21.2 In the command handling logic (where `/workflow` is parsed), check the state of this toggle. If the SOP mode is enabled (`True`), route the `/workflow <task>` command to use the new `Coordinator.run(task)` (Task 18) instead of the old `WorkflowTool.execute(...)`. If the toggle is off, fall back to the legacy workflow for backward compatibility.
 - 21.3 Update any on-screen help or documentation in the app UI to reflect this option (e.g., a tooltip or sidebar note that enabling SOP mode will orchestrate Planner→Coder→QA→Reviewer automatically).
@@ -1388,8 +1461,10 @@ You are a **Cursor IDE chat agent**. Your sole mission is to execute this task a
 
 - Any existing project files referenced below. If a required file is missing, ask the user to attach it before proceeding.
 
+
 ### Steps to perform
 
+- git checkout -b coord/e2e-tests
 - 22.1 Write an integration test covering the entire coordinated workflow. In tests/e2e/test\_coordination\_pipeline.py:
 - 22.2 Mark this test with `@pytest.mark.slow` to exclude it from regular CI runs due to time and API usage (it will run the actual LLM calls unless those are stubbed/mocked). If possible, stub out the LLM agents with deterministic fake outputs to run this test purely offline.
 - 22.3 Execute `pytest -q tests/e2e/test_coordination_pipeline.py` locally to verify the happy-path scenario works end-to-end.
@@ -1455,8 +1530,10 @@ You are a **Cursor IDE chat agent**. Your sole mission is to execute this task a
 
 - Any existing project files referenced below. If a required file is missing, ask the user to attach it before proceeding.
 
+
 ### Steps to perform
 
+- git checkout -b coord/retries-budget
 - 23.1 Augment the `Coordinator` (Task 18) with robustness features:
 - 23.2 Implement budget checks in `Coordinator.run()`: before invoking each agent, compare the cumulative tokens used (accessible via UsageLogger or MetricsManager) against a threshold (maybe configurable via an environment variable or passed-in parameter). If the next call would exceed the budget, skip that call and instead produce a Review output indicating the task was aborted due to budget limits.
 - 23.3 Add/adjust tests for these scenarios:
@@ -1523,13 +1600,14 @@ You are a **Cursor IDE chat agent**. Your sole mission is to execute this task a
 
 - Any existing project files referenced below. If a required file is missing, ask the user to attach it before proceeding.
 
+
 ### Steps to perform
 
+- git checkout -b coord/security-sanitization
 - 24.1 Implement a sanitization utility to scrub potentially malicious content from agent outputs before they are reused. For example, create `coordination/util.py` with a function `sanitize_json(text: str) -> str` that removes known prompt injection patterns (e.g., any occurrence of `"Ignore previous instructions"` or similar phrases) from the given text.
 - 24.2 Apply this sanitization step at each hand-off point in the Coordinator:
-- 24.3 Add unit tests for `sanitize_json`. Include cases like a string containing `"<|Ignore previous instructions|>"` (or other prompt injection samples) and ensure the function strips or neutralizes them. Also verify it doesn’t alter innocent content.
-- 24.4 Run `pytest -q tests/unit/test_sanitization.py` to validate the sanitization logic works as intended.
-- 24.5 `git add -u && git commit -m "sec: sanitize inter-agent JSON artifacts for safety"`
+- 24.3 Add unit tests for `sanitize_json`. Include cases like a string containing `"<|Ignore previous instructions|>"` (or other prompt injection samples) and ensure the function strips or neutralizes them. Also verify it doesn't alter innocent content.
+- 24.4 Run `
 
 ### Do-Not-Stop-Until checklist
 
@@ -1545,7 +1623,7 @@ You are a **Cursor IDE chat agent**. Your sole mission is to execute this task a
 
 ```bash
 git add -A
-git commit -m "sec: sanitize inter-agent JSON artifacts for safety"
+git commit -m "task-24: security-sanitization"
 git push --set-upstream origin coord/security-sanitization
 gh pr create --base main --head coord/security-sanitization --draft --fill
 gh pr ready <PR_NUMBER>
@@ -1578,144 +1656,6 @@ Save the same debrief block to `agent_workspace/debrief_task_24.md` and append a
 
 When **everything** above is complete, reply only with:
 ```success: Task 24 complete```
-
----
-
-## Task 25: Deprecate Legacy Coordination Mode (branch `coord/retire-legacy`)
-
-You are a **Cursor IDE chat agent**. Your sole mission is to execute this task and **not stop** until the entire checklist is satisfied.
-
-### Inputs required
-
-- Section `### 25` of `consolidated_development_roadmap.md`.
-
-- Any existing project files referenced below. If a required file is missing, ask the user to attach it before proceeding.
-
-### Steps to perform
-
-- 25.1 Remove references to the old multi-agent orchestration to avoid confusion now that SOP coordination is in place. This includes retiring the `WorkflowTool` in `src/tools/workflow.py` and any legacy agent collaboration logic.
-- 25.2 Eliminate the temporary toggle introduced in Task 21: the new SOP pipeline becomes the default behavior for `/workflow`. (In other words, `/workflow <task>` should now always invoke the Coordinator, and the checkbox or config controlling it can be removed.)
-- 25.3 Search the codebase for any conditional branches or flags related to "legacy" or "A2A" mode. Delete or refactor those sections so that only the new Planner→Coder→QualityGate→Reviewer path exists moving forward.
-- 25.4 Update or remove outdated tests tied to the old workflow. For example, if there were unit tests for `WorkflowTool`, consider removing them or replacing them with tests for the new Coordinator. Ensure all test files now pass with only the new coordination logic present.
-- 25.5 Run a full quality check: `pre-commit run --all-files` and `pytest -q`. All linters and tests should remain green with the legacy code gone.
-- 25.6 `git add -A && git commit -m "chore: remove legacy A2A workflow implementation"`
-
-### Do-Not-Stop-Until checklist
-
-- All code / docs edits are applied.
-
-- Quality gates pass: `ruff`, `pytest -q`, etc.
-
-- GitHub workflow executed (see snippet below).
-
-- Debrief block posted in this chat using the template.
-
-### GitHub CLI workflow (copy/paste)
-
-```bash
-git add -A
-git commit -m "chore: remove legacy A2A workflow implementation"
-git push --set-upstream origin coord/retire-legacy
-gh pr create --base main --head coord/retire-legacy --draft --fill
-gh pr ready <PR_NUMBER>
-gh pr checks <PR_NUMBER> --watch
-printf "y\n" | gh pr merge <PR_NUMBER> --merge --delete-branch
-git checkout main
-git pull --ff-only origin main
-git branch -d coord/retire-legacy
-```
-### Debrief template
-
-```markdown
-## Debrief for Task 25
-
-- Task Completed: Task 25: Deprecate Legacy Coordination Mode (branch `coord/retire-legacy`)
-- Summary of Changes: <fill>
-- Key Files Modified/Created: <fill>
-- Commit SHA: <fill>
-- PR Link: <fill>
-- Tag (if applicable): <fill>
-- Current Git Status: <fill>
-- Next Task Information: <fill>
-- Potential Issues or Notes for Next Agent: <fill>
-```
-### Persistence actions
-
-After you paste the debrief above, also **append** `Task 25` to `agent_workspace/roadmap_progress.txt` (create the file if it does not exist).
-
-Save the same debrief block to `agent_workspace/debrief_task_25.md` and append a link (or the block itself) to `agent_workspace/debrief_index.md` so future agents have a chronological ledger.
-
-When **everything** above is complete, reply only with:
-```success: Task 25 complete```
-
----
-
-## Task 26: Documentation & Release (branch `docs/coordination-v2`)
-
-You are a **Cursor IDE chat agent**. Your sole mission is to execute this task and **not stop** until the entire checklist is satisfied.
-
-### Inputs required
-
-- Section `### 26` of `consolidated_development_roadmap.md`.
-
-- Any existing project files referenced below. If a required file is missing, ask the user to attach it before proceeding.
-
-### Steps to perform
-
-- 26.1 Update README.md to document the new capabilities:
-- 26.2 Update contributor guides and policies:
-- 26.3 Bump the version in project metadata (e.g., `__version__` or pyproject.toml) to 0.3.0 to mark this major update.
-- 26.4 Perform a final integration test of the entire system on a clean environment (simulate as if an agent or a developer is using it from scratch). This includes verifying that `agent_workspace` setup, all new slash commands, and the `/workflow` pipeline function as documented.
-- 26.5 Tag the new release:
-- 26.6 `git add -A && git commit -m "docs: update README, CONTRIBUTING, and quality policy for v0.3.0 release"` (ensure all documentation changes are committed).
-
-### Do-Not-Stop-Until checklist
-
-- All code / docs edits are applied.
-
-- Quality gates pass: `ruff`, `pytest -q`, etc.
-
-- GitHub workflow executed (see snippet below).
-
-- Debrief block posted in this chat using the template.
-
-### GitHub CLI workflow (copy/paste)
-
-```bash
-git add -A
-git commit -m "docs: update README, CONTRIBUTING, and quality policy for v0.3.0 release"
-git push --set-upstream origin docs/coordination-v2
-gh pr create --base main --head docs/coordination-v2 --draft --fill
-gh pr ready <PR_NUMBER>
-gh pr checks <PR_NUMBER> --watch
-printf "y\n" | gh pr merge <PR_NUMBER> --merge --delete-branch
-git checkout main
-git pull --ff-only origin main
-git branch -d docs/coordination-v2
-```
-### Debrief template
-
-```markdown
-## Debrief for Task 26
-
-- Task Completed: Task 26: Documentation & Release (branch `docs/coordination-v2`)
-- Summary of Changes: <fill>
-- Key Files Modified/Created: <fill>
-- Commit SHA: <fill>
-- PR Link: <fill>
-- Tag (if applicable): <fill>
-- Current Git Status: <fill>
-- Next Task Information: <fill>
-- Potential Issues or Notes for Next Agent: <fill>
-```
-### Persistence actions
-
-After you paste the debrief above, also **append** `Task 26` to `agent_workspace/roadmap_progress.txt` (create the file if it does not exist).
-
-Save the same debrief block to `agent_workspace/debrief_task_26.md` and append a link (or the block itself) to `agent_workspace/debrief_index.md` so future agents have a chronological ledger.
-
-When **everything** above is complete, reply only with:
-```success: Task 26 complete```
 
 ---
 
