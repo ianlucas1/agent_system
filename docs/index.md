@@ -1,8 +1,10 @@
-# agent_system
+# Multi-Agent Chatbot GUI (SOP-based multi-agent coordination)
 
 Welcome to the **agent_system** documentation site.
 
-This project focuses on providing a robust framework for multi-agent LLM orchestration and collaboration. It features an interactive Streamlit GUI as the primary interface, an A2A-lite workflow, a shared ContextBus (MCP-lite memory), an extensible ToolRegistry, and built-in observability and quality gates.
+This project is an interactive Streamlit application for orchestrating **multiple cooperative LLM agents**. It features a structured Planner → Coder → QualityGate → Reviewer workflow (SOP coordination), a shared, file-locked **ContextBus** (MCP-lite memory), an extensible **ToolRegistry** (file ops, shell, git/gh, memory, workflow, etc.), built-in observability (Prometheus toggle, `/metrics`), strict quality gates (Ruff, pytest, MyPy/Bandit for touched files, auto QA for code-generating agents), and live documentation (MkDocs GH-Pages). The GUI serves as the central cockpit for these operations.
+
+Recent updates include long-term vector memory, a headless web browser, a SQL analytics engine, task scheduling, and GUI automation tools—extending agent capabilities while keeping the system lean.
 
 Use the sidebar (or the links below) to navigate:
 
