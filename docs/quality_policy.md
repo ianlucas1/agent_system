@@ -9,8 +9,9 @@ not block feature work.
 | Tool              | CI status | Commit Hook | Rule                                                                      |
 |-------------------|-----------|-------------|---------------------------------------------------------------------------|
 | Ruff              | blocking  | yes         | Must pass with zero errors.                                               |
-| Pytest + coverage | blocking  | yes         | All tests green; coverage gate via `pytest.ini`.                          |
+| Pytest + coverage | blocking  | yes         | All tests green; ≥55% coverage overall (enforced via `pytest.ini`).       |
 | Bandit            | non-block | yes         | Issues in **touched files** must be fixed or annotated (`# nosec`).       |
+| Semgrep (security) | non-block | no         | High-severity findings in **touched code** must be fixed or suppressed (with justification). |
 | MyPy              | non-block | yes         | Touched files must be free of *new* errors; legacy debt may remain.       |
 
 Legacy issues remain visible in the CI log but do not fail the build until the
