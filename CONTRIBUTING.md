@@ -24,13 +24,16 @@ git checkout -b feat/<topic>
 ruff check .
 
 # Tests & coverage – must pass
-pytest -q          # coverage gate via pytest.ini
+pytest -q          # coverage gate (>=55% coverage) via pytest.ini
 
 # Static typing – **non-blocking in CI** for now but please fix errors locally
 mypy src || true   # remove `|| true` once codebase is type-clean
 
 # Security scan – advisory
 bandit -q -r src
+
+# Additional static analysis – advisory
+semgrep --config auto -q .
 
 # Ensure package is installed in editable mode once per clone
 pip install -e .
