@@ -19,6 +19,7 @@ You are a **Cursor IDE chat agent**. Your sole mission is to execute this task a
 
 - Any existing project files referenced below. If a required file is missing, ask the user to attach it before proceeding.
 
+
 ### Steps to perform
 
 - git checkout -b cleanup/eth-vestiges
@@ -89,6 +90,9 @@ You are a **Cursor IDE chat agent**. Your sole mission is to execute this task a
 
 - Any existing project files referenced below. If a required file is missing, ask the user to attach it before proceeding.
 
+- The following artifact file(s) are provided in `agent_workspace/`:
+  - `agent_workspace/task_2_step_1_block1.sh`
+
 ### Steps to perform
 
 - git checkout -b ci/metrics-job
@@ -156,6 +160,11 @@ You are a **Cursor IDE chat agent**. Your sole mission is to execute this task a
 - Section `### 3` of `consolidated_development_roadmap.md`.
 
 - Any existing project files referenced below. If a required file is missing, ask the user to attach it before proceeding.
+
+- The following artifact file(s) are provided in `agent_workspace/`:
+  - `agent_workspace/task_3_step_1_scaffold.py`
+  - `agent_workspace/task_3_step_2_block2.py`
+  - `agent_workspace/task_3_step_3_block3.py`
 
 ### Steps to perform
 
@@ -225,6 +234,11 @@ You are a **Cursor IDE chat agent**. Your sole mission is to execute this task a
 - Section `### 4` of `consolidated_development_roadmap.md`.
 
 - Any existing project files referenced below. If a required file is missing, ask the user to attach it before proceeding.
+
+- The following artifact file(s) are provided in `agent_workspace/`:
+  - `agent_workspace/task_4_step_1_scaffold.py`
+  - `agent_workspace/task_4_step_2_scaffold.py`
+  - `agent_workspace/task_4_step_3_block3.py`
 
 ### Steps to perform
 
@@ -296,6 +310,9 @@ You are a **Cursor IDE chat agent**. Your sole mission is to execute this task a
 
 - Any existing project files referenced below. If a required file is missing, ask the user to attach it before proceeding.
 
+- The following artifact file(s) are provided in `agent_workspace/`:
+  - `agent_workspace/task_5_step_1_block1.py`
+
 ### Steps to perform
 
 - git checkout -b ui/token-dashboard
@@ -362,6 +379,10 @@ You are a **Cursor IDE chat agent**. Your sole mission is to execute this task a
 - Section `### 6` of `consolidated_development_roadmap.md`.
 
 - Any existing project files referenced below. If a required file is missing, ask the user to attach it before proceeding.
+
+- The following artifact file(s) are provided in `agent_workspace/`:
+  - `agent_workspace/task_6_step_1_scaffold.py`
+  - `agent_workspace/task_6_step_2_block2.py`
 
 ### Steps to perform
 
@@ -432,6 +453,9 @@ You are a **Cursor IDE chat agent**. Your sole mission is to execute this task a
 
 - Any existing project files referenced below. If a required file is missing, ask the user to attach it before proceeding.
 
+- The following artifact file(s) are provided in `agent_workspace/`:
+  - `agent_workspace/task_7_step_1_block1.toml`
+
 ### Steps to perform
 
 - git checkout -b ui/dark-redesign
@@ -501,6 +525,9 @@ You are a **Cursor IDE chat agent**. Your sole mission is to execute this task a
 
 - Any existing project files referenced below. If a required file is missing, ask the user to attach it before proceeding.
 
+- The following artifact file(s) are provided in `agent_workspace/`:
+  - `agent_workspace/task_8_step_1_block1.py`
+
 ### Steps to perform
 
 - git checkout -b metrics/gui-hook
@@ -566,6 +593,9 @@ You are a **Cursor IDE chat agent**. Your sole mission is to execute this task a
 - Section `### 9` of `consolidated_development_roadmap.md`.
 
 - Any existing project files referenced below. If a required file is missing, ask the user to attach it before proceeding.
+
+- The following artifact file(s) are provided in `agent_workspace/`:
+  - `agent_workspace/task_9_step_1_block1.sh`
 
 ### Steps to perform
 
@@ -639,6 +669,7 @@ You are a **Cursor IDE chat agent**. Your sole mission is to execute this task a
 
 - Any existing project files referenced below. If a required file is missing, ask the user to attach it before proceeding.
 
+
 ### Steps to perform
 
 - git checkout -b feature/memory-chroma
@@ -710,6 +741,7 @@ You are a **Cursor IDE chat agent**. Your sole mission is to execute this task a
 
 - Any existing project files referenced below. If a required file is missing, ask the user to attach it before proceeding.
 
+
 ### Steps to perform
 
 - git checkout -b feature/browser-tool
@@ -780,6 +812,7 @@ You are a **Cursor IDE chat agent**. Your sole mission is to execute this task a
 - Section `### 13` of `consolidated_development_roadmap.md`.
 
 - Any existing project files referenced below. If a required file is missing, ask the user to attach it before proceeding.
+
 
 ### Steps to perform
 
@@ -853,6 +886,7 @@ You are a **Cursor IDE chat agent**. Your sole mission is to execute this task a
 
 - Any existing project files referenced below. If a required file is missing, ask the user to attach it before proceeding.
 
+
 ### Steps to perform
 
 - git checkout -b feature/scheduler
@@ -924,6 +958,7 @@ You are a **Cursor IDE chat agent**. Your sole mission is to execute this task a
 - Section `### 15` of `consolidated_development_roadmap.md`.
 
 - Any existing project files referenced below. If a required file is missing, ask the user to attach it before proceeding.
+
 
 ### Steps to perform
 
@@ -997,6 +1032,7 @@ You are a **Cursor IDE chat agent**. Your sole mission is to execute this task a
 
 - Any existing project files referenced below. If a required file is missing, ask the user to attach it before proceeding.
 
+
 ### Steps to perform
 
 - git checkout -b coord/schema-keys
@@ -1066,6 +1102,7 @@ You are a **Cursor IDE chat agent**. Your sole mission is to execute this task a
 
 - Any existing project files referenced below. If a required file is missing, ask the user to attach it before proceeding.
 
+
 ### Steps to perform
 
 - git checkout -b coord/prompts
@@ -1133,6 +1170,7 @@ You are a **Cursor IDE chat agent**. Your sole mission is to execute this task a
 - Section `### 18` of `consolidated_development_roadmap.md`.
 
 - Any existing project files referenced below. If a required file is missing, ask the user to attach it before proceeding.
+
 
 ### Steps to perform
 
@@ -1204,6 +1242,7 @@ You are a **Cursor IDE chat agent**. Your sole mission is to execute this task a
 
 - Any existing project files referenced below. If a required file is missing, ask the user to attach it before proceeding.
 
+
 ### Steps to perform
 
 - git checkout -b coord/quality-gate
@@ -1274,6 +1313,7 @@ You are a **Cursor IDE chat agent**. Your sole mission is to execute this task a
 
 - Any existing project files referenced below. If a required file is missing, ask the user to attach it before proceeding.
 
+
 ### Steps to perform
 
 - git checkout -b coord/metrics
@@ -1341,6 +1381,7 @@ You are a **Cursor IDE chat agent**. Your sole mission is to execute this task a
 - Section `### 21` of `consolidated_development_roadmap.md`.
 
 - Any existing project files referenced below. If a required file is missing, ask the user to attach it before proceeding.
+
 
 ### Steps to perform
 
@@ -1411,6 +1452,7 @@ You are a **Cursor IDE chat agent**. Your sole mission is to execute this task a
 
 - Any existing project files referenced below. If a required file is missing, ask the user to attach it before proceeding.
 
+
 ### Steps to perform
 
 - git checkout -b coord/e2e-tests
@@ -1478,6 +1520,7 @@ You are a **Cursor IDE chat agent**. Your sole mission is to execute this task a
 - Section `### 23` of `consolidated_development_roadmap.md`.
 
 - Any existing project files referenced below. If a required file is missing, ask the user to attach it before proceeding.
+
 
 ### Steps to perform
 
@@ -1548,6 +1591,7 @@ You are a **Cursor IDE chat agent**. Your sole mission is to execute this task a
 
 - Any existing project files referenced below. If a required file is missing, ask the user to attach it before proceeding.
 
+
 ### Steps to perform
 
 - git checkout -b coord/security-sanitization
@@ -1616,6 +1660,7 @@ You are a **Cursor IDE chat agent**. Your sole mission is to execute this task a
 - Section `### 25` of `consolidated_development_roadmap.md`.
 
 - Any existing project files referenced below. If a required file is missing, ask the user to attach it before proceeding.
+
 
 ### Steps to perform
 
@@ -1687,6 +1732,9 @@ You are a **Cursor IDE chat agent**. Your sole mission is to execute this task a
 - Section `### 26` of `consolidated_development_roadmap.md`.
 
 - Any existing project files referenced below. If a required file is missing, ask the user to attach it before proceeding.
+
+- The following artifact file(s) are provided in `agent_workspace/`:
+  - `agent_workspace/task_26_step_1_block1.sh`
 
 ### Steps to perform
 

@@ -23,10 +23,11 @@ roadmap_text = roadmap_path.read_text(encoding="utf-8")
 TASK_HDR_RE = re.compile(r"^###\s*(\d+)\s+(.+?)\s+→\s+branch\s+`([^`]+)`", re.MULTILINE)
 SUBTASK_RE = re.compile(r"^\*\s+\*\*(\d+\.\d+)\*\*\s+(.*)$", re.MULTILINE)
 COMMIT_RE = re.compile(r"git commit -m\s+\"([^\"]+)\"")
+CODE_BLOCK_RE = re.compile(r"^\s*```(\w+)?\n(.*?)\n^\s*```", re.MULTILINE | re.DOTALL)
 
 # --- 3. Extract tasks ---------------------------------------------------------
 
-tasks = []  # list[(num, title, branch, subtasks:str list, commit_msg:str)]
+tasks = []  # list[(num, title, branch, subtasks:str list, commit_msg:str, artifact_files: list[(filename, content)])]
 for m in TASK_HDR_RE.finditer(roadmap_text):
     num, title, branch = m.group(1), m.group(2).strip(), m.group(3).strip()
     start = m.end()
@@ -42,11 +43,28 @@ for m in TASK_HDR_RE.finditer(roadmap_text):
     if commit_match:
         commit_msg = commit_match.group(1)
     else:
-        # Fallback sensible default
-        safe_title = re.sub(r"[^A-Za-z0-9\- ]", "", title).strip().replace(" ", "-")
-        commit_msg = f"task-{num}: {safe_title.lower()}"
+        # If no explicit commit message, try to find one in the steps
+        step_commit_match = COMMIT_RE.search("\n".join(subtasks))
+        if step_commit_match:
+             commit_msg = step_commit_match.group(1)
+        else:
+            # Fallback sensible default
+            safe_title = re.sub(r"[^A-Za-z0-9\- ]", "", title).strip().replace(" ", "-")
+            commit_msg = f"task-{num}: {safe_title.lower()}"
 
-    tasks.append((num, title, branch, subtasks, commit_msg))
+    # Check for code blocks in the section and create artifact files
+    artifact_files = []
+    code_blocks = list(CODE_BLOCK_RE.finditer(section))
+    for i, block_match in enumerate(code_blocks):
+        lang = block_match.group(1) or "txt"
+        content = block_match.group(2).strip()
+        # Simple heuristic for file extension/hint
+        hint = "patch" if "diff" in content.lower() else ("scaffold" if "class" in content or "def" in content else f"block{i+1}")
+        ext = {"python": "py", "bash": "sh", "toml": "toml"}.get(lang.lower(), lang.lower())
+        artifact_filename = f"agent_workspace/task_{num}_step_{i+1}_{hint}.{ext}"
+        artifact_files.append((artifact_filename, content))
+
+    tasks.append((num, title, branch, subtasks, commit_msg, artifact_files))
 
 # --- 4. Templates -------------------------------------------------------------
 HEADER = """<!--
@@ -91,7 +109,9 @@ DEBRIEF_TMPL = """```markdown
 # --- 5. Render ----------------------------------------------------------------
 
 out_lines = [HEADER]
-for num, title, branch, substeps, commit_msg in tasks:
+all_artifact_files = []
+
+for num, title, branch, substeps, commit_msg, artifact_files in tasks:
     out_lines.append(f"## Task {num}: {title} (branch `{branch}`)\n")
     out_lines.append(
         "You are a **Cursor IDE chat agent**. Your sole mission is to execute this task and **not stop** until the entire checklist is satisfied.\n"
@@ -102,19 +122,46 @@ for num, title, branch, substeps, commit_msg in tasks:
     out_lines.append(f"- Section `### {num}` of `consolidated_development_roadmap.md`.\n")
     out_lines.append("- Any existing project files referenced below. If a required file is missing, ask the user to attach it before proceeding.\n")
 
+    # List artifact files created by the generator for this task
+    if artifact_files:
+        out_lines.append("- The following artifact file(s) are provided in `agent_workspace/`:")
+        for filename, _ in artifact_files:
+            out_lines.append(f"  - `{filename}`")
+        all_artifact_files.extend(artifact_files)
+    out_lines.append("")
+
     # Steps
     out_lines.append("### Steps to perform\n")
     out_lines.append(f"- git checkout -b {branch}")
 
     contains_precommit = False
-    if substeps:
-        for step in substeps:
-            cleaned = step.replace("**", "").strip()
-            if "pre-commit" in cleaned:
-                contains_precommit = True
-            out_lines.append(f"- {cleaned}")
-    else:
-        out_lines.append("- Follow the sub-steps in the roadmap section.")
+    # Match steps to artifact files and rewrite
+    rewritten_substeps = []
+    artifact_idx = 0
+    for step in substeps:
+        cleaned = step.replace("**", "").strip()
+        if "pre-commit" in cleaned:
+            contains_precommit = True
+
+        # Simple heuristic: if a step contains a code block (now replaced by artifact file), reference the artifact.
+        # This assumes code blocks in roadmap and their references in steps are in order.
+        if CODE_BLOCK_RE.search(step) and artifact_idx < len(artifact_files):
+             artifact_filename, _ = artifact_files[artifact_idx]
+             # Rephrase the step to use the artifact file
+             # This is a simple replacement; could be more sophisticated if needed.
+             if "scaffold" in artifact_filename:
+                 rewritten_substeps.append(f"Create file `{artifact_filename.replace('agent_workspace/task_', 'src/').replace('_step_1_scaffold', '')}` with the content of `{artifact_filename}`")
+             elif "patch" in artifact_filename:
+                 rewritten_substeps.append(f"Save the content of `{artifact_filename}` to a temp file (e.g. `patch.tmp`) and apply it: `git apply patch.tmp`") # Reinsert git apply
+
+             else:
+                 rewritten_substeps.append(f"Use the content of `{artifact_filename}` to perform the action described in the roadmap step: {cleaned}")
+             artifact_idx += 1
+        else:
+            rewritten_substeps.append(f"{cleaned}")
+
+    for step in rewritten_substeps:
+        out_lines.append(f"- {step}")
 
     # Append safety guard for pre-commit if needed
     if contains_precommit:
@@ -151,5 +198,10 @@ for num, title, branch, substeps, commit_msg in tasks:
         + num
         + " complete```\n\n---\n"
     )
+
+# Write all artifact files
+for filename, content in all_artifact_files:
+    Path(filename).parent.mkdir(exist_ok=True)
+    Path(filename).write_text(content, encoding="utf-8")
 
 print("\n".join(out_lines)) 
