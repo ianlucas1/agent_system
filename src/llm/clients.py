@@ -30,8 +30,8 @@ logger = logging.getLogger(__name__)
 
 
 class OpenAIClientManager:
-    def __init__(self, api_key: Optional[str], default_model_name: str = "gpt-4o-mini"):
-        self.client: Optional[OpenAI] = None
+    def __init__(self, api_key: Optional[str], default_model_name: str = "o3"):
+        self.client: Optional["OpenAI"] = None
         self.model_name: str = default_model_name
         self._available: bool = False
 
@@ -119,7 +119,7 @@ class GeminiClientManager:
         api_key: Optional[str],
         default_model_name: str = "gemini-2.5-pro-preview-05-06",
     ):
-        self.client: Optional[genai.GenerativeModel] = None
+        self.client: Optional["genai.GenerativeModel"] = None
         self.model_name: str = default_model_name
         self._available: bool = False
         self._api_key: Optional[str] = api_key  # Store api_key for re-initialization

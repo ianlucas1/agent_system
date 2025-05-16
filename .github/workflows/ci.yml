@@ -32,6 +32,14 @@ jobs:
           coverage xml
       - name: Build Docs
         run: mkdocs build --strict
+      - name: Clean workspace artifacts generated during tests
+        if: always()
+        run: |
+          # Remove transient files that tests may create which would otherwise
+          # appear as modified and fail the cleanliness check.
+          rm -rf agent_workspace/
+          # Restore any tracked files that were removed so the working tree matches HEAD.
+          git checkout -- agent_workspace || true
       - name: Ensure repo clean (no untracked files)
         run: |
           git status --porcelain

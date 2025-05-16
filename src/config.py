@@ -21,21 +21,18 @@ OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
 
 # Default Model Names
-DEFAULT_OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
+DEFAULT_OPENAI_MODEL = os.getenv("OPENAI_MODEL", "o3")
 DEFAULT_GEMINI_MODEL = os.getenv(
     "GEMINI_MODEL", "gemini-2.5-pro-preview-05-06"
 )  # Matched default from ChatSession
 
 # Available Model Lists (previously in chat_gui.py)
 # These should be updated to reflect actual, valid model names intended for support.
-AVAILABLE_OPENAI_MODELS = ["gpt-4o", "gpt-4o-mini", "gpt-4-turbo", "gpt-3.5-turbo"]
+AVAILABLE_OPENAI_MODELS = ["gpt-4.1", "o4-mini", "o3"]
 
 AVAILABLE_GEMINI_MODELS = [
-    "gemini-1.5-pro-latest",
-    "gemini-1.5-flash-latest",
-    "gemini-1.0-pro",  # Older, but still common
-    # "gemini-2.5-pro-preview-05-06", # Example of a more specific preview model if needed
-    # "gemini-2.5-flash-preview-04-17"
+    "gemini-2.5-pro-preview-05-06",
+    "gemini-2.5-flash-preview-04-17"
 ]
 
 # System Prompt for ChatSession (optional, can still be in ChatSession if preferred)

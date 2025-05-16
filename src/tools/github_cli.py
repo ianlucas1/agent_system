@@ -6,7 +6,7 @@ from __future__ import annotations
 
 import logging
 import shlex
-import subprocess
+import subprocess  # nosec B404 # Subprocess is used for controlled git/gh CLI commands.
 from typing import List
 
 from .base import Tool, ToolInput, ToolOutput
@@ -73,7 +73,7 @@ class GitHubCLITool(Tool):
         full_cmd = [tool, *parts]
         logger.info("Executing %s command: %s", tool, " ".join(full_cmd))
         try:
-            completed = subprocess.run(
+            completed = subprocess.run(  # nosec B603 # Commands are from an allowlist, shlexed, and run with shell=False.
                 full_cmd,
                 capture_output=True,
                 text=True,
