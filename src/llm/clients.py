@@ -25,11 +25,12 @@ except ImportError:
     GOOGLE_SDK_AVAILABLE = False
     genai = None  # Define for type hinting
 
+from src.shared.usage_logger import UsageLogger
+
 # Get a logger for this module
 logger = logging.getLogger(__name__)
 
 # Token accounting
-from src.shared.usage_logger import UsageLogger
 
 
 class OpenAIClientManager:
