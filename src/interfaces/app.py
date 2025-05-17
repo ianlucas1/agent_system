@@ -22,7 +22,7 @@ def _fmt_cost(val):
     try:
         if isinstance(val, (int, float)):
             return f"${val:.2f}"
-    except Exception:
+    except Exception:  # nosec B110 – intentionally broad, safe in cost formatter
         pass
     return "N/A"
 
