@@ -1,10 +1,11 @@
 repos:
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.4.3
+    rev: v0.11.10
     hooks:
       - id: ruff
         args: ["--fix"]
-        stages: [commit, push]
+        stages: [pre-commit]
+        types: [python]
   - repo: https://github.com/PyCQA/bandit
     rev: 1.7.7
     hooks:
@@ -17,7 +18,7 @@ repos:
     hooks:
       - id: pytest
         name: pytest quick
-        entry: bash -c 'if [[ -n "$SKIP_TEST_HOOKS" ]]; then exit 0; fi; COVERAGE_FILE="/tmp/.coverage_precommit" pytest -q --maxfail=1 && git restore --staged --worktree -- . && true'
+        entry: bash -c 'if [[ -n "$SKIP_TEST_HOOKS" ]]; then exit 0; fi; COVERAGE_FILE="/tmp/.coverage_precommit" pytest -q --maxfail=1'
         language: system
         pass_filenames: false
   - repo: local

@@ -5,7 +5,6 @@ python-a2a==0.5.5          # Google Agent-to-Agent protocol
 streamlit
 tiktoken
 filelock
-ruff
 prometheus_client
 chromadb
 playwright
