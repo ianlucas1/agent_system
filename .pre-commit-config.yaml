@@ -20,8 +20,8 @@ repos:
         name: pytest quick
         entry: >-
           bash -c 'if [[ -n "$SKIP_TEST_HOOKS" ]]; then exit 0; fi;
-          PYTEST_ADDOPTS="" COVERAGE_FILE="/tmp/.coverage_precommit" pytest -q
-          --maxfail=1 -p no:cacheprovider --no-cov'
+          export PYTEST_ADDOPTS="";
+          pytest -q --maxfail=1 -p no:cacheprovider'
         language: system
         pass_filenames: false
   - repo: local
