@@ -1,7 +1,6 @@
 import pytest
 from src.tools.browser import BrowserTool
 from src.tools.base import ToolInput
-import asyncio
 
 @pytest.mark.slow
 async def test_browser_tool_browse_example_com():
