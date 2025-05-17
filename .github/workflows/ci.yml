@@ -17,6 +17,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: chartboost/ruff-action@v1
+        id: ruff
         with:
           args: --output-format=github
     outputs:

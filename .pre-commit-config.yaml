@@ -24,7 +24,7 @@ repos:
     hooks:
       - id: mypy-advisory
         name: mypy (advisory)
-        entry: mypy src || true
+        entry: bash -c 'mypy src || true'
         language: system
         pass_filenames: false
   - repo: local
