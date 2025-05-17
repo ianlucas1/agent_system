@@ -19,7 +19,7 @@ jobs:
       - uses: chartboost/ruff-action@v1
         id: ruff
         with:
-          args: --output-format=github
+          args: check --format=github .
       - name: Actionlint
         uses: reviewdog/action-actionlint@v1
         with:
