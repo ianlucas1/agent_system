@@ -1,5 +1,9 @@
 # Code-Quality Ratchet
 
+_All checks run locally first._  Every contributor must run `tox -e ci` before
+pushing which executes **exactly** the same pipeline as GitHub Actions.
+If it is red locally it will be red in CI.
+
 This repository follows a *ratchet* strategy: every pull-request should leave
 quality at the same level or **better** than before, but historical debt does
 not block feature work.

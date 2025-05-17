@@ -71,3 +71,18 @@ git checkout main
 git pull --ff-only origin main
 git branch -d feat/<topic>
 ```
+
+After cloning the repo run:
+
+```bash
+pre-commit install   # installs the git hooks (runs Ruff, Bandit, pytest-quick)
+```
+
+Before you push run **exactly** the same pipeline that GitHub CI does:
+
+```bash
+tox -e ci  # runs Ruff (full repo), pytest (minus slow tests), coverage
+```
+
+If `tox -e ci` passes locally your PR will be green – CI will abort after the fast
+Ruff job if any lint error remains, saving minutes and tokens.

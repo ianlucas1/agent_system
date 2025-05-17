@@ -190,6 +190,7 @@ for num, title, branch, substeps, commit_msg, artifact_files in tasks:
     out_lines.append("### Do-Not-Stop-Until checklist\n")
     out_lines.append("- All code / docs edits are applied.\n")
     out_lines.append("- Quality gates pass: `ruff`, `pytest -q`, etc.\n")
+    out_lines.append("- `tox -e ci` passes locally (identical to CI).\n")
     out_lines.append("- GitHub workflow executed (see snippet below).\n")
     out_lines.append("- Debrief block posted in this chat using the template.\n")
 
