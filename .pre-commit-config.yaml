@@ -9,6 +9,7 @@ repos:
     hooks:
       - id: bandit
         args: ["-q", "-r", "src", "-x", "tests"]
+        pass_filenames: false
         # Bandit remains non-blocking for now. Use fail_fast: false to gather
         # all issues; developers must fix or # nosec touched files.
   - repo: local
