@@ -25,6 +25,9 @@ def test_cost_monitor_openai_and_gemini(mock_get, monkeypatch):
         # Patch threading.Thread in cost_monitor to prevent background thread
         monkeypatch.setattr("src.shared.cost_monitor.threading.Thread", lambda *a, **kw: None)
 
+        # Ensure environment variable present for _poll_openai
+        monkeypatch.setenv("OPENAI_API_KEY", "dummy")
+
         # Mock OpenAI API response
         mock_get.return_value.status_code = 200
         mock_get.return_value.json.return_value = {"total_usage": 12345}  # in cents
