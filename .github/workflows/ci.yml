@@ -1,10 +1,14 @@
 name: CI
 
 on:
-  push:
-    branches: [ main ]
+  # Run CI for all pull requests targeting main (standard workflow)
   pull_request:
     branches: [ main ]
+
+  # Also run for direct pushes to any branch *except* main.  Direct pushes
+  # to main are discouraged by policy and will therefore not trigger CI.
+  push:
+    branches-ignore: [ main ]
 
 jobs:
   test:
