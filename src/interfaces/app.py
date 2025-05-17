@@ -6,9 +6,9 @@ Provides a UI for chatting with OpenAI and Gemini models, and using file system 
 import streamlit as st
 from src.core.chat_session import ChatSession
 import os
-import shared.history as history # Added for persistent history loading and clearing
-import shared.usage_logger as UL
-import shared.cost_monitor  # Import cost monitor module
+from src.shared import history  # persistent history loading and clearing
+from src.shared import usage_logger as UL
+from src.shared import cost_monitor  # Import cost monitor module
 
 # import tiktoken # No longer needed here directly
 # import google.generativeai as genai # No longer needed here directly
@@ -43,7 +43,7 @@ st.session_state.setdefault("messages", history.load())
 chat_session = st.session_state.chat_session
 
 # Start cost polling thread on app startup
-shared.cost_monitor.start_polling()
+cost_monitor.start_polling()
 
 # --- Helper Functions for UI Rendering ---
 
@@ -426,7 +426,7 @@ def main_gui():
     # --- End Task 5 addition ---
 
     # --- Task 8: Prometheus Metrics Link ---
-    from shared.metrics import MetricsManager
+    from src.shared.metrics import MetricsManager
     mm = MetricsManager()
     if mm.enabled:
         metrics_url = f"http://localhost:{mm._bound_port}/metrics"

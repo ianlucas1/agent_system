@@ -1,88 +1,50 @@
 import pytest
-from src.tools.memory import MemoryTool
+import shutil
+import os
+from src.tools.memory import ChromaMemoryTool
 from src.tools.base import ToolInput
 
+CHROMA_PATH = os.path.join("agent_workspace", "chroma_db")
 
-class DummyBus:
-    def __init__(self):
-        self.storage = {}
+@pytest.fixture(autouse=True)
+def cleanup_chroma():
+    # Remove Chroma DB before and after each test for isolation
+    if os.path.exists(CHROMA_PATH):
+        shutil.rmtree(CHROMA_PATH)
+    yield
+    if os.path.exists(CHROMA_PATH):
+        shutil.rmtree(CHROMA_PATH)
 
-    def get(self, key):
-        return self.storage.get(key)
-
-    def set(self, key, value):
-        self.storage[key] = value
-
-    def append(self, key, value):
-        prev = self.storage.get(key, "")
-        if prev:
-            self.storage[key] = f"{prev}\n---\n{value}"
-        else:
-            self.storage[key] = value
-
-
-@ pytest.fixture
-def bus():
-    return DummyBus()
-
-
-@ pytest.fixture
-def tool(bus):
-    return MemoryTool(bus=bus)
-
-
-def test_get_existing(tool, bus):
-    bus.storage['a'] = '1'
-    result = tool.execute(ToolInput("get", {"key": 'a'}))
+def test_remember_and_recall():
+    tool = ChromaMemoryTool()
+    text = "The Eiffel Tower is in Paris."
+    # Remember a fact
+    result = tool.execute(ToolInput("remember", {"text": text}))
     assert result.success
-    assert result.data['value'] == '1'
-    assert result.message == '1'
+    assert "Remembered" in result.message
+    # Recall with a related query
+    recall = tool.execute(ToolInput("recall", {"query": "Where is the Eiffel Tower?"}))
+    assert recall.success
+    assert "Eiffel Tower" in recall.message
 
+def test_recall_no_match():
+    tool = ChromaMemoryTool()
+    # Add a fact
+    tool.execute(ToolInput("remember", {"text": "The Eiffel Tower is in Paris."}))
+    # Query with something unrelated
+    recall = tool.execute(ToolInput("recall", {"query": "Completely unrelated query"}))
+    assert recall.success
+    # NOTE: Chroma always returns the closest match, even for unrelated queries.
+    # This test only checks that the tool does not error.
 
-def test_get_missing(tool):
-    result = tool.execute(ToolInput("get", {"key": 'b'}))
-    assert result.success
-    assert result.data['value'] is None
-    assert result.message == ''
-
-
-def test_set(tool, bus):
-    result = tool.execute(ToolInput("set", {"key": 'x', "value": 'y'}))
-    assert result.success
-    assert bus.storage['x'] == 'y'
-    assert result.data['value'] == 'y'
-    assert result.message == 'y'
-
-
-def test_append(tool, bus):
-    bus.storage['a'] = 'foo'
-    result = tool.execute(ToolInput("append", {"key": 'a', "value": 'bar'}))
-    expected = 'foo\n---\nbar'
-    assert result.success
-    assert bus.storage['a'] == expected
-    assert result.data['value'] == expected
-    assert result.message == expected
-
-
-def test_unsupported_op(tool):
-    result = tool.execute(ToolInput("delete", {"key": 'a'}))
+def test_remember_requires_text():
+    tool = ChromaMemoryTool()
+    result = tool.execute(ToolInput("remember", {}))
     assert not result.success
-    assert "Unsupported MemoryTool operation" in result.error
+    assert "/remember requires a text string" in result.error
 
-
-def test_missing_key(tool):
-    result = tool.execute(ToolInput("get", {}))
+def test_recall_requires_query():
+    tool = ChromaMemoryTool()
+    result = tool.execute(ToolInput("recall", {}))
     assert not result.success
-    assert "key" in result.error
-
-
-def test_missing_value_for_set(tool):
-    result = tool.execute(ToolInput("set", {"key": 'a'}))
-    assert not result.success
-    assert "value" in result.error
-
-
-def test_missing_value_for_append(tool):
-    result = tool.execute(ToolInput("append", {"key": 'a'}))
-    assert not result.success
-    assert "value" in result.error 
+    assert "/recall requires a query string" in result.error 

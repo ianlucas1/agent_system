@@ -5,4 +5,5 @@
 - [Debrief for Task 5](debrief_task_5.md)
 - [Debrief for Task 6](debrief_task_6.md)
 - [Debrief for Task 7](debrief_task_7.md)
-- [Task 8 Debrief](debrief_task_8.md) 
+- [Task 8 Debrief](debrief_task_8.md)
+- [Debrief for Task 9](debrief_task_9.md) 
