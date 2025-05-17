@@ -283,8 +283,13 @@ def _render_token_counts_sidebar():
     cost_path = pathlib.Path("agent_workspace/cost_cache.json")
     if cost_path.exists():
         data = json.loads(cost_path.read_text())
-        st.sidebar.markdown(f"💵 OpenAI last 24h: ${data.get('openai_24h', 'N/A'):.2f}")
-        st.sidebar.markdown(f"💵 Gemini est.: ${data.get('gemini_est', 'N/A'):.2f}")
+        def _fmt_cost(val):
+            if isinstance(val, (int, float)):
+                return f"${val:.2f}"
+            return "N/A"
+
+        st.sidebar.markdown(f"💵 OpenAI last 24h: {_fmt_cost(data.get('openai_24h'))}")
+        st.sidebar.markdown(f"💵 Gemini est.: {_fmt_cost(data.get('gemini_est'))}")
 
 
 def _render_clear_chat_button() -> bool:
