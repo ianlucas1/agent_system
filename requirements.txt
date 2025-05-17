@@ -9,4 +9,4 @@ ruff
 prometheus_client
 chromadb
 playwright
-packaging<25 
+packaging<25

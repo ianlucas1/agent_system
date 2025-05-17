@@ -1,15 +1,18 @@
-import pytest
+import os
+import sys
+
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../../")))
+
 from src.tools.browser import BrowserTool
 from src.tools.base import ToolInput
 
-@pytest.mark.slow
-async def test_browser_tool_browse_example_com():
+
+def test_open_local_file(tmp_path):
+    html = tmp_path / "index.html"
+    html.write_text("<html><body><h1>Hello</h1></body></html>")
+
     tool = BrowserTool()
-    try:
-        input_args = ToolInput(operation_name="browse", args={"url": "https://example.com"})
-        # Execute is now synchronous again due to internal asyncio.run workaround
-        output = tool.execute(input_args)
-        assert output.success
-        assert "Example Domain" in output.message
-    finally:
-        await tool.close() # close is still async 
+    result = tool.execute(ToolInput("open", {"url": html.as_uri()}))
+
+    assert result.success
+    assert "Hello" in result.message
