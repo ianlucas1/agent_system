@@ -15,4 +15,7 @@ where = ["."]
 include = ["src", "src.*"]
 
 [tool.ruff]
-# Exclude auto-generated task scaffolds and log outputs. 
+# Exclude auto-generated task scaffolds and log outputs.
+extend-exclude = ["agent_workspace/**", "logs/*"]
+line-length = 120
+target-version = "py311"
