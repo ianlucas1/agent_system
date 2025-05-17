@@ -23,6 +23,7 @@ inbox/
 .coverage.*
 htmlcov/
 coverage.xml
+.pytest_cache/
 
 # Build artefacts
 *.egg-info/
