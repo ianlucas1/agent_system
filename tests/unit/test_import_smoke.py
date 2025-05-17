@@ -4,6 +4,7 @@ The goal is to catch bad import paths or missing dependencies early in CI.
 import importlib
 
 import pytest
+from src.tools.registry import ToolRegistry
 
 # --- 1. Critical module import list ---
 CRITICAL_MODULES = [
@@ -22,9 +23,6 @@ def test_module_imports(module_name):
 
 
 # --- 2. Tool Registry sanity ---
-from src.tools.registry import ToolRegistry
-
-
 def test_tool_registry_integrity():
     """All registered tools should be importable and expose an execute method."""
     registry_contents = ToolRegistry.list_tools()
