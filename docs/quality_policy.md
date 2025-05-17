@@ -1,5 +1,9 @@
 # Code-Quality Ratchet
 
+_All checks run locally first._  Every contributor must run `tox -e ci` before
+pushing which executes **exactly** the same pipeline as GitHub Actions.
+If it is red locally it will be red in CI.
+
 This repository follows a *ratchet* strategy: every pull-request should leave
 quality at the same level or **better** than before, but historical debt does
 not block feature work.
@@ -13,6 +17,7 @@ not block feature work.
 | Bandit            | non-block | yes         | Issues in **touched files** must be fixed or annotated (`# nosec`).       |
 | Semgrep (security) | non-block | no         | High-severity findings in **touched code** must be fixed or suppressed (with justification). |
 | MyPy              | non-block | yes         | Touched files must be free of *new* errors; legacy debt may remain.       |
+| Actionlint (workflow) | blocking | yes | GitHub workflow YAML must pass actionlint. |
 
 Legacy issues remain visible in the CI log but do not fail the build until the
 baseline is clean.

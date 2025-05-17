@@ -11,7 +11,26 @@ on:
     branches-ignore: [ main ]
 
 jobs:
+  lint:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: chartboost/ruff-action@v1
+        id: ruff
+        with:
+          args: check --output-format=github .
+          version: "0.11.10"
+      - name: Actionlint
+        uses: reviewdog/action-actionlint@v1
+        with:
+          reporter: github-pr-check
+    outputs:
+      lint_result: ${{ steps.ruff.outcome }}
+
   test:
+    needs: lint
+    if: needs.lint.outputs.lint_result == 'success'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -24,14 +43,19 @@ jobs:
           python -m pip install -r requirements.txt
           python -m pip install -r requirements-dev.txt
           python -m pip install -e .
+      - name: Install Playwright browsers
+        run: playwright install --with-deps chromium    
       - name: Ruff
-        run: ruff check .
+        uses: chartboost/ruff-action@v1
+        with:
+          args: check --output-format=github .
+          version: "0.11.10"
       - name: Mypy (non-blocking)
         run: mypy src || true
       - name: Bandit
         run: bandit -q -r src
       - name: Tests & Coverage
-        run: |-
+        run: |
           pytest -q
           coverage xml
       - name: Build Docs
@@ -48,6 +72,7 @@ jobs:
         run: |
           git status --porcelain
           test "$(git status --porcelain | wc -l)" -eq 0
+
   metrics:
     runs-on: ubuntu-latest
     steps:

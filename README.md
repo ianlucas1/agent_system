@@ -76,3 +76,17 @@ Before running the CLI or GUI you should install the package in *editable* mode 
 ```bash
 pip install -e .
 ```
+
+## Development Quick-Start
+
+```bash
+# one-time
+pip install -r requirements-dev.txt
+pre-commit install   # git hooks (Ruff, Bandit, pytest)
+
+# before every push
+tox -e ci             # runs the identical pipeline that GitHub CI will run
+```
+
+The first Ruff pass fixes most style issues automatically; if `tox -e ci` is
+green, the GitHub workflow will be green as well.

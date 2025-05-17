@@ -31,3 +31,6 @@ coverage.xml
 
 # MkDocs build directory
 site/
+
+# Tox environment directories
+.tox/
