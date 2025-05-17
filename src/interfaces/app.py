@@ -8,7 +8,7 @@ from src.core.chat_session import ChatSession
 import os
 from src.shared import history  # persistent history loading and clearing
 from src.shared import usage_logger as UL
-import shared.cost_monitor  # Import cost monitor module
+from src.shared import cost_monitor  # Import cost monitor module
 
 # import tiktoken # No longer needed here directly
 # import google.generativeai as genai # No longer needed here directly
@@ -43,7 +43,7 @@ st.session_state.setdefault("messages", history.load())
 chat_session = st.session_state.chat_session
 
 # Start cost polling thread on app startup
-shared.cost_monitor.start_polling()
+cost_monitor.start_polling()
 
 # --- Helper Functions for UI Rendering ---
 
