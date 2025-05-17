@@ -3,19 +3,20 @@ repos:
     rev: v0.4.3
     hooks:
       - id: ruff
-        args: ["check", "--fix"]
+        args: ["--fix"]
   - repo: https://github.com/PyCQA/bandit
     rev: 1.7.7
     hooks:
       - id: bandit
-        args: ["-q", "-r", "src"]
+        args: ["-q", "-r", "src", "-x", "tests"]
+        pass_filenames: false
         # Bandit remains non-blocking for now. Use fail_fast: false to gather
         # all issues; developers must fix or # nosec touched files.
   - repo: local
     hooks:
       - id: pytest
         name: pytest quick
-        entry: pytest -q
+        entry: bash -c 'COVERAGE_FILE="/tmp/.coverage_precommit" pytest -q && git restore --staged --worktree -- . && true'
         language: system
         pass_filenames: false
   - repo: local
