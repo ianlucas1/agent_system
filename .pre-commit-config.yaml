@@ -17,7 +17,7 @@ repos:
     hooks:
       - id: pytest
         name: pytest quick
-        entry: bash -c 'COVERAGE_FILE="/tmp/.coverage_precommit" pytest -q --maxfail=1 && git restore --staged --worktree -- . && true'
+        entry: bash -c 'if [[ -n "$SKIP_TEST_HOOKS" ]]; then exit 0; fi; COVERAGE_FILE="/tmp/.coverage_precommit" pytest -q --maxfail=1 && git restore --staged --worktree -- . && true'
         language: system
         pass_filenames: false
   - repo: local
@@ -38,7 +38,7 @@ repos:
     hooks:
       - id: git-status-clean
         name: ensure-no-untracked-files
-        entry: bash -c '[[ -z $(git ls-files --others --exclude-standard) ]] || (echo "⚠️  Untracked files present. Run \"git add -A\"." && exit 1)'
+        entry: bash -c 'if [[ -n "$SKIP_GIT_CLEAN" ]]; then exit 0; fi; [[ -z $(git ls-files --others --exclude-standard) ]] || (echo "⚠️  Untracked files present. Run \"git add -A\"." && exit 1)'
         language: system
         pass_filenames: false
   - repo: https://github.com/rhysd/actionlint

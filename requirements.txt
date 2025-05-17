@@ -7,4 +7,6 @@ tiktoken
 filelock
 ruff
 prometheus_client
-chromadb 
+chromadb
+playwright
+packaging<25 

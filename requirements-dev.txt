@@ -5,4 +5,5 @@ bandit>=1.7
 ruff==0.4.3
 mkdocs-material
 mkdocs-mermaid2-plugin
-pytest-asyncio 
+pytest-asyncio
+packaging<25 
