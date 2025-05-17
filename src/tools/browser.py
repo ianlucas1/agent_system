@@ -42,15 +42,28 @@ class BrowserTool(Tool):
             if page:
                 await page.close()
 
-    async def execute(self, tool_input: ToolInput) -> ToolOutput: # Changed to async
+    # EXECUTE IS NOW SYNCHRONOUS due to asyncio.run() workaround
+    def execute(self, tool_input: ToolInput) -> ToolOutput:
         op = tool_input.operation_name.lower().strip()
         args = tool_input.args or {}
         if op == "browse":
             url = args.get("url")
             if not url or not isinstance(url, str):
                 return ToolOutput(success=False, error="/browse requires a URL string.")
-            # Await the async open_url method
-            result = await self.open_url(url) 
+            # WORKAROUND: Use asyncio.run to call the async open_url from this sync-behaving execute method.
+            # This is to accommodate the synchronous CommandHandler.execute_command.
+            # A proper fix would involve making CommandHandler and its callers async.
+            try:
+                # Ensure there's an event loop or create one for asyncio.run()
+                # This might conflict if an outer loop (e.g. from Streamlit/pytest-asyncio) is already running.
+                result = asyncio.run(self.open_url(url))
+            except RuntimeError as e:
+                if "cannot be called from a running event loop" in str(e):
+                    # If already in a loop, try to schedule and run differently (more complex, may not work here easily)
+                    # For now, log and return error. This indicates the workaround isn't sufficient.
+                    logger.error(f"asyncio.run failed in BrowserTool.execute due to existing loop: {e}")
+                    return ToolOutput(success=False, error=f"Async execution error: {e}. BrowserTool may need full async integration.")
+                raise # Re-raise other RuntimeErrors
             return ToolOutput(success=True, message=result)
         else:
             return ToolOutput(success=False, error=f"Unsupported operation: {op}")
