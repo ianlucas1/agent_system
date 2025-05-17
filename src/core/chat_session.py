@@ -20,7 +20,7 @@ from src.handlers.command import CommandHandler, Command  # Updated import
 from src.llm.clients import OpenAIClientManager, GeminiClientManager  # Updated import
 from src.tools.file_system import FileManagerTool  # Updated import
 from src.tools.base import ToolInput  # Updated import
-import shared.history as history  # Added for persistent history
+from src.shared import history  # persistent history
 
 logger = logging.getLogger(__name__)  # Added
 
