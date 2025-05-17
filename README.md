@@ -90,3 +90,5 @@ tox -e ci             # runs the identical pipeline that GitHub CI will run
 
 The first Ruff pass fixes most style issues automatically; if `tox -e ci` is
 green, the GitHub workflow will be green as well.
+
+<!-- Test comment for hook validation V3 -->
